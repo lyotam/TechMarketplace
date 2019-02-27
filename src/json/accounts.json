@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Jane Coder",
+    "provider": "http://localhost:22000",
+    "key": "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=",
+    "address": "0xed9d02e382b34818e88b88a309c7fe71e65f419d"
+  },
+  {
+    "name": "C.J. Sharp",
+    "provider": "http://localhost:22001",
+    "key": "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=",
+    "address": "0xca843569e3427144cead5e4d5999a3d0ccf92b8e"
+  },
+  {
+    "name": "Sue Bash",
+    "provider": "http://localhost:22002",
+    "key": "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=",
+    "address": "0x0fbdc686b912d7722dc86510934589e0aaf3b55a"
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Blue Drone",
+    "image": "images/items/drone-blue.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Gray Drone",
+    "image": "images/items/drone-gray.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Red Drone",
+    "image": "images/items/drone-red.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Yellow Drone",
+    "image": "images/items/drone-yellow.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Blue Headphones",
+    "image": "images/items/headphones-blue.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Gray Headphones",
+    "image": "images/items/headphones-gray.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Red Headphones",
+    "image": "images/items/headphones-red.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Yellow Headphones",
+    "image": "images/items/headphones-yellow.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Blue Microcontroller",
+    "image": "images/items/microcontroller-blue.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Gray Microcontroller",
+    "image": "images/items/microcontroller-gray.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Red Microcontroller",
+    "image": "images/items/microcontroller-red.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Yellow Microcontroller",
+    "image": "images/items/microcontroller-yellow.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Blue VR",
+    "image": "images/items/vr-blue.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Gray VR",
+    "image": "images/items/vr-gray.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Red VR",
+    "image": "images/items/vr-red.jpg",
+    "price": 2400000000000000000
+  },
+  {
+    "name": "Yellow VR",
+    "image": "images/items/vr-yellow.jpg",
+    "price": 2400000000000000000
+  }
+]

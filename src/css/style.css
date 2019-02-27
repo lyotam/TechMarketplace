@@ -1,0 +1,84 @@
+/**
+ * TechMarketplace Stylesheet
+ */
+
+/* Navbar styles */
+.navbar {
+  border: none;
+  border-radius: 0;
+}
+.navbar .account-balance {
+  font-size: 1.25em;
+}
+.navbar .account-balance-wrapper {
+  margin-top: -5px;
+}
+.navbar .img-localhost {
+  height: 32px;
+  margin: 8px 0;
+}
+.navbar .img-coin {
+  width: 25px;
+}
+.navbar.navbar-light .nav-link {
+  color: #242424;
+  font-weight: bold;
+}
+.navbar.navbar-light .nav-link small {
+  font-weight: bold;
+}
+.navbar.navbar-light .nav-link:hover {
+  color: #242424;
+}
+
+/* Card item styles */
+.card-body {
+  padding: 0.75rem;
+}
+.card-price .img-coin {
+  width: 20px;
+}
+.card-img-top {
+  border-radius: 25px;
+}
+.card-price {
+  background-color: rgba(256, 256, 256, 0.6);
+  background-blend-mode: soft-light;
+  border-radius: 999px;
+  padding: 4px 20px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+}
+.card-item-name {
+  font-size: 1.1em;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+  white-space: nowrap;
+}
+.card-body .btn-edit {
+  color: #757575;
+  display: none;
+}
+.card-info-wrapper {
+  line-height: 1em;
+  cursor: pointer;
+}
+.card-info-wrapper:hover .btn-edit {
+  display: block;
+}
+.card-info-wrapper .card-item-nickname {
+  color: #b6b6b6;
+  font-weight: 500;
+}
+.card-input-name {
+  border: none;
+  display: none;
+  width: 100%;
+  padding: 5px;
+}
+
+.card-buy-privately {
+  margin: auto;
+  width: 50%;
+  padding: 10px;
+}

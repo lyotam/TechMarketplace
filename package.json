@@ -1,0 +1,18 @@
+{
+  "name": "mlh-localhost-quorum",
+  "version": "1.0.0",
+  "description": "MLH Localhost: Intro to Ethereum apps Powered by Quorum",
+  "main": "truffle.js",
+  "scripts": {
+    "start": "lite-server",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
+    "seed": "truffle exec scripts/seed.js --network development",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "lite-server": "~2.3.0",
+    "truffle": "~4.1.3"
+  }
+}

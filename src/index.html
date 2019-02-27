@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TechMarketplace</title>
+
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico" sizes="32x32" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link href='css/style.css' rel='stylesheet'>
+
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <div class='container'>
+      <a class="navbar-brand" href="#">
+        <img alt='Quorum logo' class='img-center img-quorum' src='./images/quorum-logo.jpg' height="150" />
+      </a>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item dropdown">
+            <div class='nav-link text-right mr-4'>
+              <small>BALANCE</small>
+              <div class='account-balance-wrapper d-flex align-items-center'>
+                <span class='account-balance'>0.00</span>
+                <img class='img-coin ml-1' src='./images/coin.png' />
+              </div>
+            </div>
+          <li>
+          <li class="nav-item dropdown d-flex align-items-center">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <span id='account-name'>Accounts</span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+              <div id='account-item' style='display: none;'>
+                <a class="dropdown-item" href='/' value="0">Account 0</a>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class='container my-5'>
+    <div id='itemRow' class='row'/>
+
+    <div id='itemTemplate' style='display: none;'>
+      <div class='marketplace-item col-sm-6 col-md-4 col-lg-3'>
+        <div class="card mb-5 border-0">
+          <div class='position-relative'>
+            <div class='position-absolute text-center' style='bottom: 12px; right: 0; left: 0;'>
+              <span class='card-price d-inline-flex align-items-center'>
+                <span class='card-price-amount'>0.00</span>
+                <img class='img-coin ml-1' src='images/coin.png'/>
+              </span>
+            </div>
+            <img class='card-img-top w-100' src='https://placebear.com/g/300/300' alt='TechMarketplace image'/>
+          </div>
+          <div class="card-body">
+            <div class='d-flex justify-content-between align-items-center'>
+              <div class='card-info-wrapper d-flex align-items-center justify-content-between w-100 mr-2'>
+                <div class='card-info'>
+                  <h6 class='card-item-name text-left m-0'>Item</h6>
+                  <span class='card-item-nickname'>Nickname</span>
+                </div>
+                <div class='btn-edit'><i class="fas fa-lg fa-pen-square"></i></div>
+                <input class='card-input-name' placeholder="Enter nickname..."/>
+              </div>
+              <button class='btn btn-buy btn-primary btn-sm px-3'>Buy</button>
+              <button disabled class='btn btn-sold btn-success btn-sm px-3'>Sold</button>
+
+            </div>
+            <div class='card-owners'>
+              <div class='card-item-seller text-center m-0'>Available</div>
+              <div class='card-item-buyer text-center m-0'>Available</div>
+            </div>
+            <div class='card-buy-privately'>
+              <button class='btn btn-buy-privately btn-danger btn-sm px-1'>Buy Privately</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  <script src="https://use.fontawesome.com/releases/v5.0.9/js/all.js"></script>
+  <script src="js/web3.min.js"></script>
+  <script src="js/truffle-contract.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
