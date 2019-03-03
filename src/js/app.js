@@ -1,6 +1,6 @@
 App = {
-  NAME_IDX: 0,
-  KEY_IDX: 1,
+  ACCOUNT_NAME_IDX: 0,
+  ACCOUNT_KEY_IDX: 1,
   ITEM_SELLER_IDX: 1,
   ITEM_STATE_ID_IDX: 0,
   ITEM_STATE_IDX: 1,
@@ -79,7 +79,7 @@ App = {
             if (result.args.seller == App.account.hash) {
               console.log("finalizing Item State");
               
-              instance.finalizeItemState(Number(result.args.itemId), {
+              instance.markItemSold(Number(result.args.itemId), {
                 from: App.account.hash,
                 privateFor: App.inclusivePrivateFor,
               });
@@ -88,11 +88,11 @@ App = {
               console.log(error);
         });
 
-        /* ItemStateFinalized event listener */
-        contract.ItemStateFinalized().watch(function(error, result) {
+        /* ItemStateSold event listener */
+        contract.ItemStateSold().watch(function(error, result) {
           if (!error) {
 
-            console.log("Received Event ItemStateFinalized - {itemId: %s}", Number(result.args.itemId));
+            console.log("Received Event ItemStateSold - {itemId: %s}", Number(result.args.itemId));
             console.log("Updating Item State");
 
             instance.getItemState(Number(result.args.itemId))
@@ -185,8 +185,8 @@ App = {
     var isOwnedByAccount = data[App.ITEM_SELLER_IDX] == App.account.hash;
     var isSold = Number(itemState) == App.ITEM_STATE_SOLD;
     var nickname = data[5].length > 0 ? `"${data[5]}"` : "";
-    var seller = `Seller: "${App.address2account[data[App.ITEM_SELLER_IDX]][App.NAME_IDX]}"`;
-    var buyer =  isSold ? `Buyer: "${App.address2account[data[App.ITEM_BUYER_IDX]][App.NAME_IDX]}"` : "";
+    var seller = `Seller: "${App.address2account[data[App.ITEM_SELLER_IDX]][App.ACCOUNT_NAME_IDX]}"`;
+    var buyer =  isSold ? `Buyer: "${App.address2account[data[App.ITEM_BUYER_IDX]][App.ACCOUNT_NAME_IDX]}"` : "";
 
     console.log("Item State: ", isSold);
 
@@ -240,7 +240,6 @@ App = {
   handleBuying: function(event, isPrivate) {
     event.preventDefault();
     var instance;
-    var itemState;
     var button = $(event.target);
     var card = button.closest(".marketplace-item");
     var itemId = card.data("id");
@@ -259,7 +258,7 @@ App = {
         console.log("itemSeller: ", itemSeller);
         console.log("address2account: ", App.address2account);
 
-        var txnPrivateFor = isPrivate ? [App.address2account[itemSeller][App.KEY_IDX]] : App.inclusivePrivateFor;
+        var txnPrivateFor = isPrivate ? [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX]] : App.inclusivePrivateFor;
 
         console.log("isPrivate: ", isPrivate);
         console.log("txnPrivateFor: ", txnPrivateFor);

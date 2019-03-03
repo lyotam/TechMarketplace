@@ -8,8 +8,8 @@ contract Market {
   ItemOffer[] public itemOffers;
 
   struct ItemOffer {
-      address seller;
-      ItemState itemState;
+    address seller;
+    ItemState itemState;
   }
 
   struct Item {
@@ -21,17 +21,13 @@ contract Market {
     address buyer;
   }
 
-    event ItemSold(uint itemId, address seller);
-    event ItemStateFinalized(uint itemId);
+  event ItemSold(uint itemId, address seller);
+  event ItemStateSold(uint itemId);
 
-
-  // private contract
-  // add backup on local mac
-  // vs code instatead of atom
-  // tessera - 2 jvms or 1
-  // where are the public keys configured, how does a new node joins with it's keys
-  // web3 creation with truffle
-  // double spending with private transaction
+  modifier validItemId(uint id) {
+    require(id >= 0 && id <= items.length, "Invalid item id");
+    _;
+  }
 
 
   constructor(address accountA, address accountB, address accountC) public { 
@@ -45,16 +41,15 @@ contract Market {
   }
 
   function createItem(address _seller, string _name, string _image, uint256 _price) public {
-    Item memory _item = Item(_seller, _name, _image, _price, "" , address(0));
+    Item memory _item = Item(_seller, _name, _image, _price, "", address(0));
     items.push(_item);
     itemOffers.push(ItemOffer(_seller, ItemState.Available));
   }
 
-  function buyItem(uint id) public returns (uint) {
-    require(id >= 0 && id <= items.length);
-    require(msg.sender != items[id].seller);
-    require(balances[msg.sender] >= items[id].price);
-    require(itemOffers[id].itemState == ItemState.Available);
+  function buyItem(uint id) public validItemId(id) returns (uint) {
+    require(msg.sender != items[id].seller, "Seller can't purchase item");
+    require(balances[msg.sender] >= items[id].price, "Insufficient funds");
+    require(itemOffers[id].itemState == ItemState.Available, "Item is not for sale");
 
     balances[msg.sender] -= items[id].price;
     balances[items[id].seller] += items[id].price;
@@ -65,17 +60,15 @@ contract Market {
     return id;
   }
 
-  function finalizeItemState(uint id) public returns (uint) {
-    require(itemOffers[id].seller == msg.sender);
+  function markItemSold(uint id) public returns (uint) {
+    require(itemOffers[id].seller == msg.sender, "Only seller can finalize item");
     
     itemOffers[id].itemState = ItemState.Sold;
 
-    emit ItemStateFinalized(id);
+    emit ItemStateSold(id);
   }
 
-  function setNickname(uint id, string newNickname) public returns (uint) {
-    require(id >= 0 && id <= items.length);
-
+  function setNickname(uint id, string newNickname) public validItemId(id) returns (uint) {
     items[id].nickname = newNickname;
 
     return id;
