@@ -216,7 +216,7 @@ App = {
       App.handleBuying(event, false);    
     });
     $(document).on("click", ".btn-buy-privately", function(event) {
-      App.handleBuying(event, true);    
+      // Add code here   
     });
     $(document).on("keypress", ".card-input-name", App.handleNickname);
     $(document).on("click", ".btn-edit", App.toggleEdit);
@@ -254,11 +254,9 @@ App = {
       })
       .then(function(item) {
 
-        var itemSeller = item[App.ITEM_SELLER_IDX];
-        console.log("itemSeller: ", itemSeller);
         console.log("address2account: ", App.address2account);
 
-        var txnPrivateFor = isPrivate ? [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX]] : App.inclusivePrivateFor;
+        var txnPrivateFor = App.inclusivePrivateFor;
 
         console.log("isPrivate: ", isPrivate);
         console.log("txnPrivateFor: ", txnPrivateFor);
@@ -269,7 +267,7 @@ App = {
           privateFor: txnPrivateFor,
         });
       })
-      .then(function(data) {
+      .then(function() {
         button.toggleClass("disabled");
         App.fetchBalance();
       })

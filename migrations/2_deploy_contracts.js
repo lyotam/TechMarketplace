@@ -1,17 +1,46 @@
+var TechToken = artifacts.require("TechToken");
+var SafeMath = artifacts.require("SafeMath");
 var Market = artifacts.require("Market");
 
+var Token = artifacts.require("Token");
+var Marketplace = artifacts.require("Marketplace");
+
+var account1key = "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=";
+var account2key = "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=";
+var account3key = "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=";
+
+var publicKeys = [account1key, account2key, account3key];
+var techTokenAddress;
+var tokenAddress;
+
 module.exports = function(deployer) {
-  deployer.deploy(
-    Market,
-    "0xed9d02e382b34818e88b88a309c7fe71e65f419d", // Node one address
-    "0xca843569e3427144cead5e4d5999a3d0ccf92b8e", // Node two address
-    "0x0fbdc686b912d7722dc86510934589e0aaf3b55a", // Node three address
-    {
-      privateFor: [
-        "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=", // Node one
-        "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=", // Node two
-        "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8=", // Node three
-      ],
-    }
-  );
+
+  // deployer.then(async () => {
+
+  //   deployer.deploy(SafeMath, {privateFor: publicKeys});
+  //   deployer.link(SafeMath, TechToken);
+
+  //   await deployer.deploy(TechToken, {privateFor: publicKeys}).then(() => {
+  //     console.log("techTokenAddress: ", TechToken.address)
+  //     techTokenAddress = TechToken.address;
+  //   });
+
+  //   await deployer.deploy(Market, techTokenAddress, {privateFor: publicKeys});
+  // })
+
+  deployer.then(async () => {
+
+    deployer.deploy(SafeMath, {privateFor: publicKeys});
+    deployer.link(SafeMath, Token);
+
+    await deployer.deploy(Token, {privateFor: publicKeys}).then(() => {
+      console.log("tokenAddress: ", Token.address)
+      tokenAddress = Token.address;
+    });
+
+    await deployer.deploy(Marketplace, tokenAddress, {privateFor: publicKeys});
+  })
+
 };
+
+//          "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8=", // Account four pub key (base64)

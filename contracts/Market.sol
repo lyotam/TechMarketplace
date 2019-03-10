@@ -1,12 +1,14 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.23;
+
+import "./IERC20.sol";
+import "./TechToken.sol";
 
 contract Market {
 
     Item[] public items;
-    mapping(address => uint256) public balances;
     enum ItemState {Available, Sold}
-
     ItemOffer[] public itemOffers;
+    TechToken public cashToken;
 
     struct ItemOffer {
         address seller;
@@ -31,14 +33,12 @@ contract Market {
     }
 
 
-    constructor(address accountA, address accountB, address accountC) public { 
-        balances[accountA] = 10 ether;
-        balances[accountB] = 10 ether;
-        balances[accountC] = 10 ether;
+    constructor(address cashTokenAddress) public {
+        cashToken = TechToken(cashTokenAddress);
     }
 
-    function getBalance(address node) public view returns (uint256){
-        return balances[node];
+    function getBalance(address account) public view returns (uint) {
+        return cashToken.balanceOf(account);
     }
 
     function createItem(address _seller, string _name, string _image, uint256 _price) public {
@@ -49,11 +49,10 @@ contract Market {
 
     function buyItem(uint id) public validItemId(id) returns (uint) {
         require(msg.sender != items[id].seller, "Seller can't purchase item");
-        require(balances[msg.sender] >= items[id].price, "Insufficient funds");
+        require(getBalance(msg.sender) >= items[id].price, "Insufficient funds");
         require(itemOffers[id].itemState == ItemState.Available, "Item is not for sale");
 
-        balances[msg.sender] -= items[id].price;
-        balances[items[id].seller] += items[id].price;
+        cashToken.transfer(items[id].seller, items[id].price);
         items[id].buyer = msg.sender;
 
         emit ItemSold(id, items[id].seller);

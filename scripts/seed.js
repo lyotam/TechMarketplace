@@ -1,7 +1,13 @@
 const Market = artifacts.require("Market");
+const TechToken = artifacts.require("TechToken");
 const data = require("../src/json/items.json");
-// const secret_data = require("../src/json/secret_items.json");
 const accounts = require("../src/json/accounts.json");
+
+var account1key = "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=";
+var account2key = "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=";
+var account3key = "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=";
+
+var publicKeys = [account1key, account2key, account3key];
 
 const getItems = async function() {
   const size = await this.getSize();
@@ -25,6 +31,7 @@ const createItems = async function() {
 
       return await this.createItem(owner, item.name, item.image, item.price, {
         privateFor: [
+          "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=",
           "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=",
           "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=",
         ],
@@ -33,30 +40,23 @@ const createItems = async function() {
   );
 };
 
-// const createSecretItems = async function() {
-//   return Promise.all(
-//     secret_data.map(async item => {
-//       return await this.createItem(accounts[0].address, item.name, item.image, item.price, {
-//         privateFor: [
-//           "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=",
-//         ],
-//       });
-//     }),
-//   );
-// };
-
 module.exports = async function() {
 
   try {
-    const contract = await Market.deployed();
-    contract.getItems = getItems.bind(contract);
-    contract.createItems = createItems.bind(contract);
-    // contract.createSecretItems = createSecretItems.bind(contract);
+    const marketplace = await Market.deployed();
+    marketplace.getItems = getItems.bind(marketplace);
+    marketplace.createItems = createItems.bind(marketplace);
 
-    await contract.createItems();
-    // await contract.createSecretItems();
+    await marketplace.createItems();
 
-    console.log(await contract.getItems());
+    console.log(await marketplace.getItems());
+
+    const token = await TechToken.deployed();
+    
+    accounts.forEach(async account => {
+      await token.transfer(account.address, 12, {privateFor: publicKeys});
+    });
+
   } catch (error) {
     console.log(error);
   }
