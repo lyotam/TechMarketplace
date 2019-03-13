@@ -15,31 +15,31 @@ var tokenAddress;
 
 module.exports = function(deployer) {
 
-  // deployer.then(async () => {
-
-  //   deployer.deploy(SafeMath, {privateFor: publicKeys});
-  //   deployer.link(SafeMath, TechToken);
-
-  //   await deployer.deploy(TechToken, {privateFor: publicKeys}).then(() => {
-  //     console.log("techTokenAddress: ", TechToken.address)
-  //     techTokenAddress = TechToken.address;
-  //   });
-
-  //   await deployer.deploy(Market, techTokenAddress, {privateFor: publicKeys});
-  // })
-
   deployer.then(async () => {
 
     deployer.deploy(SafeMath, {privateFor: publicKeys});
-    deployer.link(SafeMath, Token);
+    deployer.link(SafeMath, TechToken);
 
-    await deployer.deploy(Token, {privateFor: publicKeys}).then(() => {
-      console.log("tokenAddress: ", Token.address)
-      tokenAddress = Token.address;
+    await deployer.deploy(TechToken, {privateFor: publicKeys}).then(() => {
+      console.log("techTokenAddress: ", TechToken.address)
+      techTokenAddress = TechToken.address;
     });
 
-    await deployer.deploy(Marketplace, tokenAddress, {privateFor: publicKeys});
+    await deployer.deploy(Market, techTokenAddress, {privateFor: publicKeys});
   })
+
+  // deployer.then(async () => {
+
+  //   deployer.deploy(SafeMath, {privateFor: publicKeys});
+  //   deployer.link(SafeMath, Token);
+
+  //   await deployer.deploy(Token, {privateFor: publicKeys}).then(() => {
+  //     console.log("tokenAddress: ", Token.address)
+  //     tokenAddress = Token.address;
+  //   });
+
+  //   await deployer.deploy(Marketplace, tokenAddress, {privateFor: publicKeys});
+  // })
 
 };
 

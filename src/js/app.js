@@ -35,25 +35,34 @@ App = {
       .map(function(acc) {
         return acc.key;
       });
+    App.inclusivePrivateFor.push("oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="); // node 4 address ----- change
+
+    console.log("inclusivePrivateFor: ", App.inclusivePrivateFor);
 
     accounts.forEach(function(account) {
       App.address2account[account.address] = [account.name, account.key];
     });
     App.address2account[App.NULL_ADDRESS] = ["Unknown", ""]; 
 
-    return App.initContract();
+    return App.initContracts();
   },
 
   /**
    * Initializes smart contract on web application
    */
-  initContract: function() {
+  initContracts: function() {
     $.getJSON("Market.json", function(data) {
       App.contracts.Market = TruffleContract(data);
-
       App.contracts.Market.setProvider(App.web3Provider);
 
+      console.log("App.contracts.Market.address: ", App.contracts.Market.address);
+
       return App.fetchItems();
+    });
+
+    $.getJSON("TechToken.json", function(data) {
+      App.contracts.CashToken = TruffleContract(data);
+      App.contracts.CashToken.setProvider(App.web3Provider);
     });
 
     return App.setupPage();
@@ -150,7 +159,7 @@ App = {
         return instance.getBalance(App.account.hash);
       })
       .then(function(balance) {
-        $(".account-balance").text(Number(web3.fromWei(balance)).toFixed(2));
+        $(".account-balance").text(Number(balance));
       })
       .catch(function(error) {
         console.log(error);
@@ -181,7 +190,7 @@ App = {
    */
   fillElement: function(data, element, itemState) {
 
-    var ether = Number(web3.fromWei(data[4])).toFixed(2);
+    var price = Number(data[4]);
     var isOwnedByAccount = data[App.ITEM_SELLER_IDX] == App.account.hash;
     var isSold = Number(itemState) == App.ITEM_STATE_SOLD;
     var nickname = data[5].length > 0 ? `"${data[5]}"` : "";
@@ -198,7 +207,7 @@ App = {
 
     element.find(".card-item-name").text(data[2]);
     element.find(".card-img-top").attr("src", data[3]);
-    element.find(".card-price-amount").text(ether);
+    element.find(".card-price-amount").text(price);
     element.find(".card-item-nickname").text(nickname);
 
     element.find(".card-item-seller").text(seller);
@@ -216,7 +225,7 @@ App = {
       App.handleBuying(event, false);    
     });
     $(document).on("click", ".btn-buy-privately", function(event) {
-      // Add code here   
+      App.handleBuying(event, true);    
     });
     $(document).on("keypress", ".card-input-name", App.handleNickname);
     $(document).on("click", ".btn-edit", App.toggleEdit);
@@ -252,22 +261,29 @@ App = {
         instance = contract;
         return instance.getItem(itemId);
       })
-      .then(function(item) {
+      .then(item => {
+          
+        var itemPrice = Number(item[4]);
 
-        console.log("address2account: ", App.address2account);
-
-        var txnPrivateFor = App.inclusivePrivateFor;
-
-        console.log("isPrivate: ", isPrivate);
-        console.log("txnPrivateFor: ", txnPrivateFor);
-        console.log("Buying item id: ", itemId);
-
-        return instance.buyItem(itemId, {
-          from: App.account.hash,
-          privateFor: txnPrivateFor,
-        });
+        return App.contracts.CashToken.deployed()
+          .then(function(tokenContract) {
+            return tokenContract.approve(App.contracts.Market.address, itemPrice);
+          })
+          .then(() => {
+            var itemSeller = item[App.ITEM_SELLER_IDX];
+            var txnPrivateFor = isPrivate ? [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX]] : App.inclusivePrivateFor;
+    
+            console.log("isPrivate: ", isPrivate);
+            console.log("txnPrivateFor: ", txnPrivateFor);
+            console.log("Buying item id: ", itemId);
+    
+            return instance.buyItem(itemId, {
+              from: App.account.hash,
+              privateFor: txnPrivateFor,
+            })
+          });
       })
-      .then(function() {
+      .then(() => {
         button.toggleClass("disabled");
         App.fetchBalance();
       })

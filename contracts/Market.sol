@@ -52,7 +52,7 @@ contract Market {
         require(getBalance(msg.sender) >= items[id].price, "Insufficient funds");
         require(itemOffers[id].itemState == ItemState.Available, "Item is not for sale");
 
-        cashToken.transfer(items[id].seller, items[id].price);
+        require(cashToken.transferFrom(msg.sender, items[id].seller, items[id].price), "Token transfer failed");
         items[id].buyer = msg.sender;
 
         emit ItemSold(id, items[id].seller);

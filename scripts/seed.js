@@ -54,7 +54,7 @@ module.exports = async function() {
     const token = await TechToken.deployed();
     
     accounts.forEach(async account => {
-      await token.transfer(account.address, 12, {privateFor: publicKeys});
+      await token.transfer(account.address, 10, {privateFor: publicKeys});
     });
 
   } catch (error) {
