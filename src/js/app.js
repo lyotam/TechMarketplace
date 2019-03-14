@@ -134,7 +134,7 @@ App = {
             return instance.getItem(Number(itemState[App.ITEM_STATE_ID_IDX]))
             .then(function(marketplaceItem) {
 
-              console.log("marketplaceItem: ", marketplaceItem);
+              // console.log("marketplaceItem: ", marketplaceItem);
   
               var itemEl = App.fillElement(marketplaceItem, itemTemplate, itemState[App.ITEM_STATE_IDX]);
               itemEl.find(".marketplace-item").attr("data-id", marketplaceItem[0]);
@@ -195,7 +195,7 @@ App = {
     var seller = `Seller: "${App.address2account[data[App.ITEM_SELLER_IDX]][App.ACCOUNT_NAME_IDX]}"`;
     var buyer =  isSold ? `Buyer: "${App.address2account[data[App.ITEM_BUYER_IDX]][App.ACCOUNT_NAME_IDX]}"` : "";
 
-    console.log("Item State: ", isSold);
+    // console.log("Item State: ", isSold);
 
     element.find(".btn-buy").toggle(!isSold);
     element.find(".btn-sold").toggle(isSold);
@@ -277,13 +277,12 @@ App = {
           return tokenContract.approve(instance.address, itemPrice, {
               from: App.account.hash,
               privateFor: txnPrivateFor, // change that only account + bank can see  
-          });
-        })
-        .then(instance.buyItem(itemId, {
-          from: App.account.hash,
-          privateFor: txnPrivateFor,
-        }))
-      })
+          })
+          .then(instance.buyItem(itemId, {
+            from: App.account.hash,
+            privateFor: txnPrivateFor,
+          })); 
+        })})
       .then(() => {
         button.toggleClass("disabled");
         App.fetchBalance();
