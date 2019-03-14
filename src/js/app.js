@@ -281,18 +281,18 @@ App = {
           .then(instance.buyItem(itemId, {
             from: App.account.hash,
             privateFor: txnPrivateFor,
-          })); 
-        })})
-      .then(() => {
-        button.toggleClass("disabled");
-        App.fetchBalance();
-      })
-      .catch(function(error) {
-        button.toggleClass("disabled");
-        button.prop("disabled", false);
+          }))
+          .then(() => {
+            button.toggleClass("disabled");
+            App.fetchBalance();
+          })
+          .catch(function(error) {
+            button.toggleClass("disabled");
+            button.prop("disabled", false);
 
-        console.log(error);
-      });
+            console.log(error);
+          });
+        })})
   },
 
   /**
