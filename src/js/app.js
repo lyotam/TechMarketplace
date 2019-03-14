@@ -55,8 +55,6 @@ App = {
       App.contracts.Market = TruffleContract(data);
       App.contracts.Market.setProvider(App.web3Provider);
 
-      console.log("App.contracts.Market.address: ", App.contracts.Market.address);
-
       return App.fetchItems();
     });
 
@@ -252,6 +250,9 @@ App = {
     var button = $(event.target);
     var card = button.closest(".marketplace-item");
     var itemId = card.data("id");
+    var txnPrivateFor = App.inclusivePrivateFor;
+
+    console.log("isPrivate: ", isPrivate);
 
     button.toggleClass("disabled");
     button.prop("disabled", true);
@@ -261,27 +262,27 @@ App = {
         instance = contract;
         return instance.getItem(itemId);
       })
-      .then(item => {
-          
-        var itemPrice = Number(item[4]);
 
+      .then(function(item) {
+        if (isPrivate) {
+          var itemSeller = item[App.ITEM_SELLER_IDX];
+          txnPrivateFor = [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX], "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="]; // do it more elegentlly 
+        }
+        console.log("txnPrivateFor: ", txnPrivateFor);
+
+        var itemPrice = Number(item[4]);
         return App.contracts.CashToken.deployed()
-          .then(function(tokenContract) {
-            return tokenContract.approve(App.contracts.Market.address, itemPrice);
-          })
-          .then(() => {
-            var itemSeller = item[App.ITEM_SELLER_IDX];
-            var txnPrivateFor = isPrivate ? [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX]] : App.inclusivePrivateFor;
-    
-            console.log("isPrivate: ", isPrivate);
-            console.log("txnPrivateFor: ", txnPrivateFor);
-            console.log("Buying item id: ", itemId);
-    
-            return instance.buyItem(itemId, {
+        .then(function(tokenContract) {
+          console.log("instance.address: ", instance.address);
+          return tokenContract.approve(instance.address, itemPrice, {
               from: App.account.hash,
-              privateFor: txnPrivateFor,
-            })
+              privateFor: txnPrivateFor, // change that only account + bank can see  
           });
+        })
+        .then(instance.buyItem(itemId, {
+          from: App.account.hash,
+          privateFor: txnPrivateFor,
+        }))
       })
       .then(() => {
         button.toggleClass("disabled");
