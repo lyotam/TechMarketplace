@@ -30,11 +30,7 @@ const createItems = async function() {
       console.log("owner: ", owner);
 
       return await this.createItem(owner, item.name, item.image, item.price, {
-        privateFor: [
-          "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=",
-          "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=",
-          "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=",
-        ],
+        privateFor: publicKeys
       });
     }),
   );
@@ -56,6 +52,10 @@ module.exports = async function() {
     accounts.forEach(async account => {
       await token.transfer(account.address, 10, {privateFor: publicKeys});
     });
+
+    console.log("approveAndCall response: ", await token.approveAndCall("0x89fa20d397c039a847bc1ae58081d875b3785a47", 10, 0, {
+      privateFor: publicKeys, 
+    }));
 
   } catch (error) {
     console.log(error);

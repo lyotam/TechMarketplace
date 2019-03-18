@@ -35,7 +35,7 @@ App = {
       .map(function(acc) {
         return acc.key;
       });
-    App.inclusivePrivateFor.push("oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="); // node 4 address ----- change
+    App.inclusivePrivateFor.push("oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="); // node 4 pub key ----- change
 
     console.log("inclusivePrivateFor: ", App.inclusivePrivateFor);
 
@@ -50,20 +50,31 @@ App = {
   /**
    * Initializes smart contract on web application
    */
-  initContracts: function() {
-    $.getJSON("Market.json", function(data) {
-      App.contracts.Market = TruffleContract(data);
-      App.contracts.Market.setProvider(App.web3Provider);
+  initContracts: async function() {
 
-      return App.fetchItems();
-    });
-
-    $.getJSON("TechToken.json", function(data) {
+    await $.getJSON("TechToken.json", function(data) {
       App.contracts.CashToken = TruffleContract(data);
       App.contracts.CashToken.setProvider(App.web3Provider);
-    });
 
-    return App.setupPage();
+      // Approval listener 
+      App.contracts.CashToken.deployed()
+        .then(contract => {
+          contract.Approval().watch(function(error, result) {
+            if (!error) {
+              console.log("Received Event Approval - {tokenOwner: %s, Spender: %s, Tokens Approved: %s}", result.args.tokenOwner, result.args.spender, Number(result.args.tokens));           
+            } else
+                console.log(error);
+          });
+        }); 
+    }).then( 
+
+    await $.getJSON("Market.json", function(data) {
+      App.contracts.Market = TruffleContract(data);
+      App.contracts.Market.setProvider(App.web3Provider);
+      })
+    )
+    .then(await App.fetchItems())
+    .then(await App.setupPage()); 
   },
 
   /**
@@ -244,7 +255,7 @@ App = {
    * Handles action when user clicks 'Buy'. Calls
    * the buying action on the smart contract.
    */
-  handleBuying: function(event, isPrivate) {
+  handleBuying: async function(event, isPrivate) {
     event.preventDefault();
     var instance;
     var button = $(event.target);
@@ -257,42 +268,77 @@ App = {
     button.toggleClass("disabled");
     button.prop("disabled", true);
 
-    App.contracts.Market.deployed()
-      .then(function(contract) {
-        instance = contract;
-        return instance.getItem(itemId);
-      })
+    const techToken = await App.contracts.CashToken.deployed();
 
-      .then(function(item) {
-        if (isPrivate) {
-          var itemSeller = item[App.ITEM_SELLER_IDX];
-          txnPrivateFor = [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX], "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="]; // do it more elegentlly 
-        }
-        console.log("txnPrivateFor: ", txnPrivateFor);
 
-        var itemPrice = Number(item[4]);
-        return App.contracts.CashToken.deployed()
-        .then(function(tokenContract) {
-          console.log("instance.address: ", instance.address);
-          return tokenContract.approve(instance.address, itemPrice, {
-              from: App.account.hash,
-              privateFor: txnPrivateFor, // change that only account + bank can see  
-          })
-          .then(instance.buyItem(itemId, {
-            from: App.account.hash,
-            privateFor: txnPrivateFor,
-          }))
-          .then(() => {
-            button.toggleClass("disabled");
-            App.fetchBalance();
-          })
-          .catch(function(error) {
-            button.toggleClass("disabled");
-            button.prop("disabled", false);
 
-            console.log(error);
-          });
-        })})
+    console.log("TechToken Address: ", techToken.address);
+
+    await console.log("approveAndCall response: ", await techToken.approveAndCall("0xabd5d13022b508d113d4d4f1a89fe36ff1a2f0a6", 3, 0, {
+      from: "0xca843569e3427144cead5e4d5999a3d0ccf92b8e", 
+      privateFor: ["BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=", "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=", "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="], 
+    }))
+
+    await App.fetchBalance();
+
+      //   return contract.balanceOf("0xca843569e3427144cead5e4d5999a3d0ccf92b8e");
+      // })
+
+      // .then(function(response) {
+
+      //   console.log("approveAndCall response: ", response);
+
+      //   button.toggleClass("disabled");
+      //   App.fetchBalance();
+      // })
+      // .catch(function(error) {
+      //   button.toggleClass("disabled");
+      //   button.prop("disabled", false);
+
+      //   console.log(error);
+      // });
+
+
+    // App.contracts.Market.deployed()
+    //   .then(function(contract) {
+    //     instance = contract;
+    //     return instance.getItem(itemId);
+    //   })
+
+      // .then(function(item) {
+      //   if (isPrivate) {
+      //     var itemSeller = item[App.ITEM_SELLER_IDX];
+      //     txnPrivateFor = [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX], "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="]; // do it more elegentlly 
+      //   }
+      //   console.log("txnPrivateFor: ", txnPrivateFor);
+
+      //   var itemPrice = Number(item[4]);
+      //   return App.contracts.CashToken.deployed()
+      //   .then(function(tokenContract) {
+      //     console.log("instance.address: ", instance.address);
+      //     console.log("tokenContract(%s).approveAndCall(%s, %s, %s, {from: %s, privateFor: %s, })", tokenContract.address, instance.address, itemPrice, itemId, App.account.hash, txnPrivateFor);
+      //     return tokenContract.approveAndCall(instance.address, itemPrice, itemId, {
+      //         from: App.account.hash,
+      //         privateFor: txnPrivateFor, // change that only account + bank can see? 
+      //     })
+      //     // .then(instance.buyItem(itemId, {
+      //     //   from: App.account.hash,
+      //     //   privateFor: txnPrivateFor,
+      //     // }))
+      //     .then((response) => {
+
+      //       console.log("approveAndCall response: ", response);
+
+      //       button.toggleClass("disabled");
+      //       App.fetchBalance();
+      //     })
+      //     .catch(function(error) {
+      //       button.toggleClass("disabled");
+      //       button.prop("disabled", false);
+
+      //       console.log(error);
+      //     });
+      //   })});
   },
 
   /**
@@ -316,7 +362,8 @@ App = {
             privateFor: [],
           });
         })
-        .then(function() {
+        .then(function(response) {
+          console.log("response: ", response);
           return instance.getItemState(itemId);
         })
         .then(function(state) {

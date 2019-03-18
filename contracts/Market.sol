@@ -1,14 +1,14 @@
 pragma solidity ^0.4.23;
 
 import "./IERC20.sol";
-import "./TechToken.sol";
+import "./IApproveAndCallFallBack.sol";
 
-contract Market {
+contract Market is IApproveAndCallFallBack {
 
     Item[] public items;
     enum ItemState {Available, Sold}
     ItemOffer[] public itemOffers;
-    TechToken public cashToken;
+    IERC20 public cashToken;
 
     struct ItemOffer {
         address seller;
@@ -34,7 +34,7 @@ contract Market {
 
 
     constructor(address cashTokenAddress) public {
-        cashToken = TechToken(cashTokenAddress);
+        cashToken = IERC20(cashTokenAddress);
     }
 
     function getBalance(address account) public view returns (uint) {
@@ -85,5 +85,16 @@ contract Market {
 
     function getItemState(uint id) public view returns (uint, uint) {
         return (id, uint(itemOffers[id].itemState));
+    }
+
+    function receiveApproval(address from, uint256 tokens, uint data) public {
+        require(from != items[data].seller, "Seller can't purchase item");
+        require(tokens >= items[data].price, "Insufficient funds");
+        require(itemOffers[data].itemState == ItemState.Available, "Item is not for sale");
+
+        require(cashToken.transferFrom(from, items[data].seller, items[data].price), "Token transfer failed");
+        items[data].buyer = from;
+
+        emit ItemSold(data, items[data].seller);
     }
 }

@@ -11,6 +11,7 @@ pragma solidity ^0.4.17;
 
 import "./IERC20.sol";
 import "./SafeMath.sol";
+import "./IApproveAndCallFallBack.sol";
 
 contract TechToken is IERC20 {
     using SafeMath for uint;
@@ -114,12 +115,12 @@ contract TechToken is IERC20 {
     // from the token owner's account. The `spender` contract function
     // `receiveApproval(...)` is then executed
     // ------------------------------------------------------------------------
-    // function approveAndCall(address spender, uint tokens, bytes memory data) public returns (bool success) {
-    //     allowed[msg.sender][spender] = tokens;
-    //     emit Approval(msg.sender, spender, tokens);
-    //     ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, address(this), data);
-    //     return true;
-    // }
+    function approveAndCall(address spender, uint tokens, uint data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        IApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, data);
+        return true;
+    }
 
 
 
