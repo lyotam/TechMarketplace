@@ -1,5 +1,7 @@
 const Market = artifacts.require("Market");
 const TechToken = artifacts.require("TechToken");
+const BidManager = artifacts.require("BidManager");
+
 const data = require("../src/json/items.json");
 const accounts = require("../src/json/accounts.json");
 
@@ -56,6 +58,10 @@ module.exports = async function() {
     accounts.forEach(async account => {
       await token.transfer(account.address, 10, {privateFor: publicKeys});
     });
+
+    const bidManager = await BidManager.deployed();
+
+    await bidManager.setMarket(marketplace.address, {privateFor: publicKeys});
 
   } catch (error) {
     console.log(error);
