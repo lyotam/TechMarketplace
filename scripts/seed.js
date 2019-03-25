@@ -11,6 +11,8 @@ var account3key = "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=";
 
 var publicKeys = [account1key, account2key, account3key];
 
+const NUM_ACCOUNTS = 3;
+
 const getItems = async function() {
   const size = await this.getSize();
   if (size > 0) {
@@ -28,15 +30,12 @@ const createItems = async function() {
   return Promise.all(
     data.map(async (item, index) => {
 
-      var owner = accounts[index % accounts.length].address;
+      var owner = accounts[index % NUM_ACCOUNTS].address;
       console.log("owner: ", owner);
 
       return await this.createItem(owner, item.name, item.image, item.price, {
-        privateFor: [
-          "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=",
-          "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=",
-          "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=",
-        ],
+        privateFor: publicKeys,
+        gas: 900000
       });
     }),
   );
@@ -56,12 +55,18 @@ module.exports = async function() {
     const token = await TechToken.deployed();
     
     accounts.forEach(async account => {
-      await token.transfer(account.address, 10, {privateFor: publicKeys});
+      await token.transfer(account.address, 10, {
+        privateFor: publicKeys,
+        gas: 900000  
+      });
     });
 
     const bidManager = await BidManager.deployed();
 
-    await bidManager.setMarket(marketplace.address, {privateFor: publicKeys});
+    await bidManager.setMarket(marketplace.address, {
+      privateFor: publicKeys,
+      gas: 900000  
+    });
 
   } catch (error) {
     console.log(error);
