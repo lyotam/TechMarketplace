@@ -3,12 +3,15 @@ App = {
   ACCOUNT_KEY_IDX: 1,
   ITEM_ID_IDX: 0,
   ITEM_SELLER_IDX: 1,
+  ITEM_NAME_IDX: 2,
+  ITEM_IMG_IDX: 3,
   ITEM_PRICE_IDX: 4,
-  ITEM_STATE_ID_IDX: 0,
-  ITEM_STATE_IDX: 1,
+  ITEM_NICKNAME_IDX: 5,
   ITEM_BUYER_IDX: 6,
+  ITEM_STATE_IDX: 7,
   ITEM_STATE_SOLD: 1,
   NULL_ADDRESS: "0x0000000000000000000000000000000000000000",
+  BANK_ADDRESS: "0x9186eb3d20cbd1f5f992a950d808c4495153abd5",
 
   web3Provider: null,
   contracts: {},
@@ -38,7 +41,6 @@ App = {
       .map(function(acc) {
         return acc.key;
       });
-    App.inclusivePrivateFor.push("oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="); // node 4 address ----- change
 
     console.log("inclusivePrivateFor: ", App.inclusivePrivateFor);
 
@@ -57,6 +59,7 @@ App = {
     var marketData = await $.getJSON("Market.json");
     App.contracts.Market = await TruffleContract(marketData);
     await App.contracts.Market.setProvider(App.web3Provider);
+    await App.setupMarketListeners();
 
     var tokenData = await $.getJSON("TechToken.json");
     App.contracts.CashToken = await TruffleContract(tokenData);
@@ -65,33 +68,45 @@ App = {
     var bidManagerData = await $.getJSON("BidManager.json");
     App.contracts.BidManager = await TruffleContract(bidManagerData);
     await App.contracts.BidManager.setProvider(App.web3Provider);
+    await App.setupBidManagerListeners();
 
     await App.fetchItems();
-
     return App.setupPage();
   },
 
   /**
-   * Retrieves items from Market.sol smart contract
+   * Setup BidManager.sol event listeners
    */
-  fetchItems: function() {
-    var instance;
-    var itemRow = $("#itemRow");
-    var itemTemplate = $("#itemTemplate");
-
-    App.contracts.BidManager.deployed() // Move to separate listner func that is called after BidManager creation 
+  setupBidManagerListeners: function() {
+    App.contracts.BidManager.deployed()
     .then(bidManager => {
 
         /* BidCreated event listener */
         bidManager.BidCreated().watch(function(error, result) {
           if (!error) {
-            console.log("Received Event BidCreated - {bidId: %s, itemId: %s, buyer: %s}", Number(result.args.bidId), Number(result.args.itemId), result.args.buyer);
+            console.log("Received Event BidCreated - {bidId: %s, itemId: %s, buyer: %s}", result.args.bidId, Number(result.args.itemId), result.args.buyer);
 
             var seller = $(`[data-id="${Number(result.args.itemId)}"]`).data("seller"); 
             console.log("item seller: ", seller);
 
             if (seller == App.account.hash) {
-              console.log("I'm the seller and I'm about to finalize deal");
+              console.log("Seller received bid and executing the deal");
+
+              App.contracts.Market.deployed()
+                .then(market => {
+                  console.log("market: ", market.address);
+                  return market.sellItem(Number(result.args.itemId), result.args.bidId, {
+                    from: App.account.hash,
+                    privateFor: [App.getPublicKey(result.args.buyer), App.getPublicKey(App.BANK_ADDRESS)],  //TODO: 1) move to function 2)currently will only execute privately -- to change?
+                    gas: 900000
+                  });
+                })
+                .then((res) => {
+                  console.log(res);
+                })
+                .catch(function(error) {      
+                  console.log(error);
+                });
               
               // instance.markItemSold(Number(result.args.itemId), {
               //   from: App.account.hash,
@@ -102,15 +117,20 @@ App = {
               console.log(error);
         });
       });
+  },
 
+    /**
+   * Setup Market.sol event listeners
+   */
+  setupMarketListeners: function() {
     App.contracts.Market.deployed()
-      .then(contract => {
+      .then(market => {
 
         // set market address
-        App.marketAddress = contract.address;
+        App.marketAddress = market.address;
 
         /* ItemSold event listener */
-        contract.ItemSold().watch(function(error, result) {
+        market.ItemSold().watch(function(error, result) {
           if (!error) {
 
             console.log("Received Event ItemSold - {itemId: %s, Seller: %s}", Number(result.args.itemId), result.args.seller);
@@ -118,7 +138,7 @@ App = {
             if (result.args.seller == App.account.hash) {
               console.log("finalizing Item State");
               
-              instance.markItemSold(Number(result.args.itemId), {
+              market.markItemSold(Number(result.args.itemId), {
                 from: App.account.hash,
                 privateFor: App.inclusivePrivateFor,
               });
@@ -128,16 +148,16 @@ App = {
         });
 
         /* ItemStateSold event listener */
-        contract.ItemStateSold().watch(function(error, result) {
+        market.ItemStateSold().watch(function(error, result) {
           if (!error) {
 
             console.log("Received Event ItemStateSold - {itemId: %s}", Number(result.args.itemId));
             console.log("Updating Item State");
 
-            instance.getItem(Number(result.args.itemId))
+            market.getItem(Number(result.args.itemId))
               .then(function(marketplaceItem) {
   
-                var card = $(`[data-id="${marketplaceItem[0]}"]`);   
+                var card = $(`[data-id="${marketplaceItem[App.ITEM_ID_IDX]}"]`);   
                 App.fillElement(marketplaceItem, card);
                 App.fetchBalance();
             });      
@@ -145,6 +165,15 @@ App = {
                 console.log(error);
         });
       }); 
+  },
+
+  /**
+   * Retrieves items from Market.sol smart contract
+   */
+  fetchItems: function() {
+    var instance;
+    var itemRow = $("#itemRow");
+    var itemTemplate = $("#itemTemplate");
 
     App.contracts.Market.deployed()
       .then(function(result) {
@@ -213,12 +242,12 @@ App = {
    */
   fillElement: function(data, element) {
 
-    var price = Number(data[4]);
+    var price = Number(data[App.ITEM_PRICE_IDX]);
     var isOwnedByAccount = data[App.ITEM_SELLER_IDX] == App.account.hash;
-    var isSold = Number(data[7]) == App.ITEM_STATE_SOLD;
-    var nickname = data[5].length > 0 ? `"${data[5]}"` : "";
-    var seller = `Seller: "${App.address2account[data[App.ITEM_SELLER_IDX]][App.ACCOUNT_NAME_IDX]}"`;
-    var buyer =  isSold ? `Buyer: "${App.address2account[data[App.ITEM_BUYER_IDX]][App.ACCOUNT_NAME_IDX]}"` : "";
+    var isSold = Number(data[App.ITEM_STATE_IDX]) == App.ITEM_STATE_SOLD;
+    var nickname = data[App.ITEM_NICKNAME_IDX].length > 0 ? `"${data[App.ITEM_NICKNAME_IDX]}"` : "";
+    var seller = `Seller: "${App.getName(data[App.ITEM_SELLER_IDX])}"`;
+    var buyer =  isSold ? `Buyer: "${App.getName(data[App.ITEM_BUYER_IDX])}"` : "";
 
     // console.log("Item State: ", isSold);
 
@@ -228,8 +257,8 @@ App = {
     element.find(".btn-buy").toggleClass("disabled", isOwnedByAccount);
     element.find(".btn-buy-privately").toggleClass("disabled", isOwnedByAccount);
 
-    element.find(".card-item-name").text(data[2]);
-    element.find(".card-img-top").attr("src", data[3]);
+    element.find(".card-item-name").text(data[App.ITEM_NAME_IDX]);
+    element.find(".card-img-top").attr("src", data[App.ITEM_IMG_IDX]);
     element.find(".card-price-amount").text(price);
     element.find(".card-item-nickname").text(nickname);
 
@@ -276,16 +305,12 @@ App = {
     var itemId = card.data("id");
     var itemSeller = card.data("seller");
     var itemPrice = card.data("price");
-    var txnPrivateFor = App.inclusivePrivateFor;
+    var txnPrivateFor = isPrivate ? [App.getPublicKey(itemSeller), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor;
 
     button.toggleClass("disabled");
     button.prop("disabled", true);
 
     console.log("isPrivate: ", isPrivate);
-
-    if (isPrivate) {
-      txnPrivateFor = [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX], "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8="]; // do it more elegentlly 
-    }
     console.log("txnPrivateFor: ", txnPrivateFor);
 
     await App.contracts.CashToken.deployed()
@@ -293,7 +318,7 @@ App = {
         console.log("App.marketAddress: ", App.marketAddress);
         return tokenContract.approve(App.marketAddress, itemPrice, {
             from: App.account.hash,
-            privateFor: txnPrivateFor, // change that only account + bank can see  
+            privateFor: txnPrivateFor, //TODO: change that only account + bank can see?
         })
         .then((res) => {
           button.toggleClass("disabled");
@@ -314,7 +339,8 @@ App = {
         console.log("bidManager.createBid(%s, %s, { from: %s, privateFor: %s, });", itemId, itemPrice, App.account.hash, txnPrivateFor.toString());
         return bidManager.createBid(itemId, itemPrice, {
           from: App.account.hash,
-          privateFor: txnPrivateFor,   
+          privateFor: txnPrivateFor,
+          gas: 900000,   
         });
       })
       .then((res) => {
@@ -405,6 +431,20 @@ App = {
   //       });
   //   }
   // },
+
+  /**
+   * Returns the Public Key associated with given address
+   */
+  getPublicKey: function(address) {
+    return App.address2account[address][App.ACCOUNT_KEY_IDX];
+  },
+
+  /**
+   * Returns the account name associated with given address
+   */
+  getName: function(address) {
+    return App.address2account[address][App.ACCOUNT_NAME_IDX];
+  },
 
   /**
    * Switches accounts based on browser routes
