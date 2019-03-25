@@ -4,8 +4,8 @@ import "./Market.sol";
 
 contract BidManager {
 
-    mapping(uint256 => Bid) private bids;
-    mapping(uint256 => uint256[]) private bidIdsForItem;
+    mapping(bytes32 => Bid) private bids;
+    mapping(uint256 => bytes32[]) private bidIdsForItem;
     address market;
     address owner;
 
@@ -19,8 +19,8 @@ contract BidManager {
 
     // add mapping(bidId -> bids) and terminate all bids when one is accepted
 
-    event BidCreated(uint256 bidId, uint256 itemId, address buyer);
-    event BidAccepted(uint256 bidId);
+    event BidCreated(bytes32 bidId, uint256 itemId, address buyer);
+    event BidAccepted(bytes32 bidId);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only Owner can execute this");
@@ -37,10 +37,10 @@ contract BidManager {
         owner = msg.sender;
     }
 
-    function createBid(uint256 itemId, uint bidPrice) public returns (uint256) {
+    function createBid(uint256 itemId, uint bidPrice) public returns (bytes32) {
         require(bidPrice > 0, "Bid price must be greater than 0");
         require(bidPrice >= Market(market).getItemPrice(itemId), "Bid price must be at least the item asking price");
-        uint256 bidId = uint256(keccak256(abi.encodePacked(itemId, bidPrice, msg.sender)));
+        bytes32 bidId = keccak256(abi.encodePacked(itemId, bidPrice, msg.sender));
         require(bids[bidId].bidPrice == 0, "Bid already exists");
 
         bids[bidId] = Bid(itemId, bidPrice, msg.sender);
@@ -50,7 +50,7 @@ contract BidManager {
         return bidId;
     }
 
-    function acceptBid(uint256 bidId, uint256 itemId) public onlyMarket returns (uint, address) {
+    function acceptBid(bytes32 bidId, uint256 itemId) public onlyMarket returns (uint, address) {
         require(bids[bidId].bidPrice > 0, "Bid doesn't exist");
         require(bids[bidId].itemId == itemId, "Bid itemId doesn't match provided itemId");
 

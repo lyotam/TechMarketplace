@@ -44,7 +44,7 @@ contract Market {
         items.push(_item);
     }
 
-    function sellItem(uint itemId, uint256 bidId) public {
+    function sellItem(uint itemId, bytes32 bidId) public {
         require(items[itemId].itemState == ItemState.Available, "Item is not for sale");
 
         (uint bidPrice, address buyer) = bidManager.acceptBid(bidId, itemId);
