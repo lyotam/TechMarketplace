@@ -141,6 +141,7 @@ App = {
               market.markItemSold(Number(result.args.itemId), {
                 from: App.account.hash,
                 privateFor: App.inclusivePrivateFor,
+                gas: 900000
               });
             }             
           } else
@@ -319,6 +320,7 @@ App = {
         return tokenContract.approve(App.marketAddress, itemPrice, {
             from: App.account.hash,
             privateFor: txnPrivateFor, //TODO: change that only account + bank can see?
+            gas: 900000
         })
         .then((res) => {
           button.toggleClass("disabled");
@@ -340,7 +342,7 @@ App = {
         return bidManager.createBid(itemId, itemPrice, {
           from: App.account.hash,
           privateFor: txnPrivateFor,
-          gas: 900000,   
+          gas: 900000 
         });
       })
       .then((res) => {
