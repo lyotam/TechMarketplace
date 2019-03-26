@@ -12,6 +12,8 @@ var account3key = "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=";
 var publicKeys = [account1key, account2key, account3key];
 
 const NUM_ACCOUNTS = 3;
+const TXN_GAS = 900000;
+
 
 const getItems = async function() {
   const size = await this.getSize();
@@ -35,7 +37,7 @@ const createItems = async function() {
 
       return await this.createItem(owner, item.name, item.image, item.price, {
         privateFor: publicKeys,
-        gas: 900000
+        gas: TXN_GAS
       });
     }),
   );
@@ -44,28 +46,28 @@ const createItems = async function() {
 module.exports = async function() {
 
   try {
-    const marketplace = await Market.deployed();
-    marketplace.getItems = getItems.bind(marketplace);
-    marketplace.createItems = createItems.bind(marketplace);
+    const market = await Market.deployed();
+    market.getItems = getItems.bind(market);
+    market.createItems = createItems.bind(market);
 
-    await marketplace.createItems();
+    await market.createItems();
 
-    console.log(await marketplace.getItems());
+    console.log(await market.getItems());
 
     const token = await TechToken.deployed();
     
     accounts.forEach(async account => {
       await token.transfer(account.address, 10, {
         privateFor: publicKeys,
-        gas: 900000  
+        gas: TXN_GAS  
       });
     });
 
     const bidManager = await BidManager.deployed();
 
-    await bidManager.setMarket(marketplace.address, {
+    await bidManager.setMarket(market.address, {
       privateFor: publicKeys,
-      gas: 900000  
+      gas: TXN_GAS  
     });
 
   } catch (error) {

@@ -40,7 +40,7 @@ module.exports = function(deployer) {
 
 //////////////////////
 
-    await deployer.deploy(QTestContract, 1, {privateFor: publicKeys});
+    // await deployer.deploy(QTestContract, 1, {privateFor: publicKeys});
   })
 
   // deployer.then(async () => {

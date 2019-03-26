@@ -23,6 +23,8 @@ contract Market {
 
     event ItemSold(uint itemId, address seller);
     event ItemStateSold(uint itemId);
+    event ItemReofferRequest(uint itemId, address seller, address buyer);
+    event ItemOnSale(uint itemId);     // need it?
 
     modifier validItemId(uint id) {
         require(id >= 0 && id <= items.length, "Invalid item id");
@@ -44,7 +46,7 @@ contract Market {
         items.push(_item);
     }
 
-    function sellItem(uint itemId, bytes32 bidId) public {
+    function executeSale(uint itemId, bytes32 bidId) public {
         require(items[itemId].itemState == ItemState.Available, "Item is not for sale");
 
         (uint bidPrice, address buyer) = bidManager.acceptBid(bidId, itemId);
@@ -59,46 +61,55 @@ contract Market {
         emit ItemSold(itemId, items[itemId].seller);
     }
 
-    // function buyItem(uint id) public validItemId(id) returns (uint) {
-    //     require(msg.sender != items[id].seller, "Seller can't purchase item");
-    //     require(getBalance(msg.sender) >= items[id].price, "Insufficient funds");
+    function requestItemReoffer(uint itemId) public {
+        require(items[itemId].buyer == msg.sender, "Only item buyer can request to reoffer it for sale");
 
-    //     require(cashToken.transferFrom(msg.sender, items[id].seller, items[id].price), "Token transfer failed");
-    //     items[id].buyer = msg.sender;
-
-    //     emit ItemSold(id, items[id].seller);
-
-    //     return id;
-    // }
-
-    function markItemSold(uint id) public returns (uint) {
-        require(items[id].seller == msg.sender, "Only seller can mark item as sold");
-        
-        items[id].itemState = ItemState.Sold;
-
-        emit ItemStateSold(id);
+        emit ItemReofferRequest(itemId, items[itemId].seller, msg.sender);
     }
 
-    function setNickname(uint id, string newNickname) public validItemId(id) returns (uint) {
-        items[id].nickname = newNickname;
+    function reofferItemForSale(uint itemId, address newOwner) public {
+        require(items[itemId].itemState == ItemState.Sold, "Item is not yet sold");
+        require(items[itemId].seller == msg.sender || items[itemId].buyer == msg.sender, "Only item owner can reoffer it for sale");
 
-        return id;
+        items[itemId].seller = newOwner;
+        items[itemId].buyer = address(0);
+        items[itemId].itemState = ItemState.Available;
+
+        emit ItemOnSale(itemId);
+    }
+
+    function markItemSold(uint itemId) public {
+        require(items[itemId].seller == msg.sender, "Only seller can mark item as sold");
+        
+        items[itemId].itemState = ItemState.Sold;
+
+        emit ItemStateSold(itemId);
+    }
+
+    function setNickname(uint itemId, string newNickname) public validItemId(itemId) returns (uint) {
+        items[itemId].nickname = newNickname;
+
+        return itemId;
     }
 
     function getSize() public view returns (uint) {
         return items.length;
     }
 
-    function getItem(uint id) public view returns (uint, address, string, string, uint256, string, address, uint) {
-        Item memory item = items[id];
-        return (id, item.seller, item.name, item.image, item.price, item.nickname, item.buyer, uint(item.itemState));
+    function getItem(uint itemId) public view returns (uint, address, string, string, uint256, string, address, uint) {
+        Item memory item = items[itemId];
+        return (itemId, item.seller, item.name, item.image, item.price, item.nickname, item.buyer, uint(item.itemState));
     }
-
-    // function getItemState(uint id) public view returns (uint, uint) {
-    //     return (id, uint(itemOffers[id].itemState));
-    // }
 
     function getItemPrice(uint itemId) public view returns (uint) {
         return items[itemId].price;
     }
+
+    function getItemPrice(uint itemId, uint256 price) public {
+        require(items[itemId].seller == msg.sender, "Only seller can set item price");
+    
+        items[itemId].price = price;
+    }
+            
+
 }
