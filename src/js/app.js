@@ -98,7 +98,7 @@ App = {
                   console.log("market: ", market.address);
                   return market.executeSale(Number(result.args.itemId), result.args.bidId, {
                     from: App.account.hash,
-                    privateFor: [App.getPublicKey(result.args.buyer), App.getPublicKey(App.BANK_ADDRESS)],  //TODO: 1) move to function 2)currently will only execute privately -- to change?
+                    privateFor: App.inclusivePrivateFor, //[App.getPublicKey(result.args.buyer), App.getPublicKey(App.BANK_ADDRESS)],  //TODO: 1) move to function 2)currently will only execute privately -- to change?
                     gas: App.TXN_GAS
                   });
                 })
