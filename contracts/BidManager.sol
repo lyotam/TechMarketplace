@@ -9,17 +9,13 @@ contract BidManager {
     address market;
     address owner;
 
-    // change to mapping(itemid => mapping(bidId => Bid))?
-
     struct Bid {
         uint256 itemId;
         uint bidPrice;
         address buyer;
     }
 
-    // add mapping(bidId -> bids) and terminate all bids when one is accepted
-
-    event BidCreated(bytes32 bidId, uint256 itemId, address buyer);
+    event BidCreated(bytes32 bidId, uint256 itemId, address buyer, address seller);
     event BidAccepted(bytes32 bidId);
 
     modifier onlyOwner() {
@@ -46,7 +42,7 @@ contract BidManager {
         bids[bidId] = Bid(itemId, bidPrice, msg.sender);
         bidIdsForItem[itemId].push(bidId);
         
-        emit BidCreated(bidId, itemId, msg.sender);
+        emit BidCreated(bidId, itemId, msg.sender, Market(market).getItemSeller(itemId));
         return bidId;
     }
 

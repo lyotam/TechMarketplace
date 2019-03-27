@@ -101,11 +101,15 @@ contract Market {
         return (itemId, item.seller, item.name, item.image, item.price, item.nickname, item.buyer, uint(item.itemState));
     }
 
+    function getItemSeller(uint itemId) public view returns (address) {
+        return items[itemId].seller;
+    }
+
     function getItemPrice(uint itemId) public view returns (uint) {
         return items[itemId].price;
     }
 
-    function getItemPrice(uint itemId, uint256 price) public {
+    function setItemPrice(uint itemId, uint256 price) public {
         require(items[itemId].seller == msg.sender, "Only seller can set item price");
     
         items[itemId].price = price;
