@@ -65,8 +65,4 @@ contract BidManager {
     function setMarket(address marketAddress) public onlyOwner {
         market = marketAddress;
     }
-
-    function getMarket() public view returns (address) {
-        return market;
-    }
 }

@@ -1,14 +1,13 @@
 pragma solidity ^0.4.23;
 
 import "./IERC20.sol";
-import "./TechToken.sol";  // Remove!
 import "./BidManager.sol";
 
 contract Market {
 
     Item[] private items;
     enum ItemState {Available, Sold}
-    TechToken private cashToken;
+    IERC20 private cashToken;
     BidManager private bidManager;
 
     struct Item {
@@ -24,7 +23,7 @@ contract Market {
     event ItemSold(uint itemId, address seller);
     event ItemStateSold(uint itemId);
     event ItemReofferRequest(uint itemId, address seller, address buyer);
-    event ItemOnSale(uint itemId);     // need it?
+    event ItemOnSale(uint itemId);     
 
     modifier validItemId(uint id) {
         require(id >= 0 && id <= items.length, "Invalid item id");
@@ -33,7 +32,7 @@ contract Market {
 
 
     constructor(address cashTokenAddress, address bidManagerAddress) public {
-        cashToken = TechToken(cashTokenAddress);
+        cashToken = IERC20(cashTokenAddress);
         bidManager = BidManager(bidManagerAddress);
     }
 
