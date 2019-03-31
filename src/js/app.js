@@ -20,6 +20,7 @@ App = {
   inclusivePrivateFor: null,
   address2account: {},
   marketAddress: "",
+  check: false,
 
   /**
    * Initializes web application using current account and provider
@@ -44,6 +45,7 @@ App = {
       });
 
     console.log("inclusivePrivateFor: ", App.inclusivePrivateFor);
+    console.log("check: ", App.check);
 
     accounts.forEach(function(account) {
       App.address2account[account.address] = [account.name, account.key];
@@ -57,26 +59,6 @@ App = {
    * Initializes smart contract on web application
    */
   initContracts: async function() {
-
-    // $.getJSON("Market.json", function(data) {
-    //     App.contracts.Market = TruffleContract(data);
-    //     App.contracts.Market.setProvider(App.web3Provider);
-  
-    //     return App.fetchItems
-    //     .then(App.setupMarketListeners())
-    //     .then($.getJSON("BidManager.json", function(data) {
-    //         App.contracts.BidManager = TruffleContract(data);
-    //         App.contracts.BidManager.setProvider(App.web3Provider);
-      
-    //         return App.setupBidManagerListeners();
-    //     }));
-    // })
-
-    // $.getJSON("TechToken.json", function(data) {
-    //     App.contracts.CashToken = TruffleContract(data);
-    //     App.contracts.CashToken.setProvider(App.web3Provider);
-    // });
-
     var marketData = await $.getJSON("Market.json");
     App.contracts.Market = await TruffleContract(marketData);
     await App.contracts.Market.setProvider(App.web3Provider);
@@ -176,7 +158,6 @@ App = {
               .then(function(marketplaceItem) {
   
                 var card = $(`[data-id="${marketplaceItem[App.ITEM_ID_IDX]}"]`).last();
-                console.log("CARD (ItemStateSold): ", card);   
                 App.fillElement(marketplaceItem, card);
                 App.fetchBalance();
             });      
@@ -314,6 +295,7 @@ App = {
     element.find(".btn-bid-privately").toggle(!isSold);
     element.find(".btn-bid").toggleClass("disabled", isOwnedByAccount);
     element.find(".btn-bid-privately").toggleClass("disabled", isOwnedByAccount);
+    element.find(".btn-sell").toggleClass("disabled", false);
 
     element.find(".card-item-name").text(data[App.ITEM_NAME_IDX]);
     element.find(".card-img-top").attr("src", data[App.ITEM_IMG_IDX]);
@@ -366,7 +348,7 @@ App = {
     var itemId = card.data("id");
     var itemSeller = card.data("seller");
     var itemPrice = card.data("price");
-    var txnPrivateFor = isPrivate ? [App.getPublicKey(itemSeller), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor; //TODO: move to function
+    var txnPrivateFor = App.getTxnPrivateFor(itemSeller, isPrivate); 
 
     bidButton.toggleClass("disabled", true);
     bidPrivatelyButton.toggleClass("disabled", true);
@@ -374,15 +356,14 @@ App = {
     console.log("isPrivate: ", isPrivate);
     console.log("txnPrivateFor: ", txnPrivateFor);
     console.log("itemSeller (handleBidding): ", itemSeller);
-    card.attr("data-isprivate", isPrivate);
-    console.log("isPrivate changed in card to: ", card.data("isprivate"));
+
+    localStorage.setItem(itemId, isPrivate);
 
     await App.contracts.CashToken.deployed()
       .then(function(tokenContract) {
-        console.log("App.marketAddress: ", App.marketAddress);
         return tokenContract.approve(App.marketAddress, itemPrice, {
           from: App.account.hash,
-          privateFor: txnPrivateFor, //TODO: change that only account + bank can see?
+          privateFor: txnPrivateFor, 
           gas: App.TXN_GAS
         })
         .then((res) => {
@@ -398,7 +379,7 @@ App = {
     await App.contracts.BidManager.deployed()
       .then(function(bidManager){
         console.log("Creating bid: {itemId: %s, bidPrice: %s}", itemId, itemPrice);
-        console.log("bidManager.createBid(%s, %s, { from: %s, privateFor: %s, });", itemId, itemPrice, App.account.hash, txnPrivateFor.toString());
+        // console.log("bidManager.createBid(%s, %s, { from: %s, privateFor: %s, });", itemId, itemPrice, App.account.hash, txnPrivateFor.toString());
         return bidManager.createBid(itemId, itemPrice, {
           from: App.account.hash,
           privateFor: txnPrivateFor,
@@ -426,8 +407,8 @@ App = {
     var card = button.closest(".marketplace-item");
     var itemId = card.data("id");
     var itemSeller = card.data("seller");
-    var isPrivate = card.data("isprivate");
-    var txnPrivateFor = isPrivate ? [App.getPublicKey(itemSeller), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor; //TODO: move to function
+    var isPrivate = JSON.parse(localStorage.getItem(itemId));
+    var txnPrivateFor = App.getTxnPrivateFor(itemSeller, isPrivate);
 
     console.log("isPrivate (handleSelling): ", isPrivate);
 
@@ -454,7 +435,7 @@ App = {
         }
       })
       .then((res) => {
-        button.toggleClass("disabled");     //TODO: check if needed
+        button.toggleClass("disabled");     
         console.log(res);
       })
       .catch(function(error) {
@@ -470,42 +451,37 @@ App = {
    * Handles action when user nicknames item. Creates
    * private transaction to update nickname on the contract.
    */
-  // handleNickname: function(event) {
-  //   if (event.which == 13) {
-  //     // 'Enter' keypress
-  //     var instance;
-  //     var itemState;
-  //     var name = event.target.value;
-  //     var card = $(event.target).closest(".marketplace-item");
-  //     var itemId = card.data("id");
+  handleNickname: function(event) {
+    if (event.which == 13) {
+      // 'Enter' keypress
+      var instance;
+      var name = event.target.value;
+      var card = $(event.target).closest(".marketplace-item");
+      var itemId = card.data("id");
 
-  //     App.contracts.Market.deployed()
-  //       .then(function(contract) {
-  //         instance = contract;
-  //         return instance.setNickname(itemId, name, {
-  //           from: App.account.hash,
-  //           privateFor: [],
-  //         });
-  //       })
-  //       .then(function() {
-  //         return instance.getItemState(itemId);
-  //       })
-  //       .then(function(state) {
-  //         itemState = state[App.ITEM_STATE_IDX];
-  //         return instance.getItem(itemId);
-  //       })
-  //       .then(function(data) {
-  //         card.find(".btn-edit").toggle(true);
-  //         card.find(".card-info").toggle(true);
-  //         card.find(".card-input-name").toggle(false);
+      App.contracts.Market.deployed()
+        .then(function(contract) {
+          instance = contract;
+          return instance.setNickname(itemId, name, {
+            from: App.account.hash,
+            privateFor: [],
+          });
+        })
+        .then(function() {
+          return instance.getItem(itemId);
+        })
+        .then(function(data) {
+          card.find(".btn-edit").toggle(true);
+          card.find(".card-info").toggle(true);
+          card.find(".card-input-name").toggle(false);
 
-  //         return App.fillElement(data, card);
-  //       })
-  //       .catch(function(error) {
-  //         console.log(error);
-  //       });
-  //   }
-  // },
+          return App.fillElement(data, card);
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    }
+  },
 
   /**
    * Returns the Public Key associated with given address
@@ -519,6 +495,14 @@ App = {
    */
   getName: function(address) {
     return App.address2account[address][App.ACCOUNT_NAME_IDX];
+  },
+
+  /**
+   * Returns an array containing the recipient public key & bank public key 
+   * or all recipients' public key, according to isPrivate
+   */
+  getTxnPrivateFor: function(privyAccount, isPrivate) {
+      return isPrivate ? [App.getPublicKey(privyAccount), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor; 
   },
 
   /**
