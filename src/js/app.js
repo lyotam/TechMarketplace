@@ -20,7 +20,6 @@ App = {
   inclusivePrivateFor: null,
   address2account: {},
   marketAddress: "",
-  check: false,
 
   /**
    * Initializes web application using current account and provider
@@ -45,7 +44,6 @@ App = {
       });
 
     console.log("inclusivePrivateFor: ", App.inclusivePrivateFor);
-    console.log("check: ", App.check);
 
     accounts.forEach(function(account) {
       App.address2account[account.address] = [account.name, account.key];
@@ -435,7 +433,8 @@ App = {
         }
       })
       .then((res) => {
-        button.toggleClass("disabled");     
+        button.toggleClass("disabled");   
+        localStorage.removeItem(itemId);  
         console.log(res);
       })
       .catch(function(error) {
