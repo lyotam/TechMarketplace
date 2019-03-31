@@ -35,7 +35,7 @@ App = {
 
     App.account.hash = web3.eth.accounts[0];
 
-    /* Holds all other accounts' keys */
+    /* Holds an array of all other accounts' public keys */
     App.inclusivePrivateFor = $(App.accounts)
       .not([App.account])
       .get()
@@ -57,9 +57,30 @@ App = {
    * Initializes smart contract on web application
    */
   initContracts: async function() {
+
+    // $.getJSON("Market.json", function(data) {
+    //     App.contracts.Market = TruffleContract(data);
+    //     App.contracts.Market.setProvider(App.web3Provider);
+  
+    //     return App.fetchItems
+    //     .then(App.setupMarketListeners())
+    //     .then($.getJSON("BidManager.json", function(data) {
+    //         App.contracts.BidManager = TruffleContract(data);
+    //         App.contracts.BidManager.setProvider(App.web3Provider);
+      
+    //         return App.setupBidManagerListeners();
+    //     }));
+    // })
+
+    // $.getJSON("TechToken.json", function(data) {
+    //     App.contracts.CashToken = TruffleContract(data);
+    //     App.contracts.CashToken.setProvider(App.web3Provider);
+    // });
+
     var marketData = await $.getJSON("Market.json");
     App.contracts.Market = await TruffleContract(marketData);
     await App.contracts.Market.setProvider(App.web3Provider);
+    await App.fetchItems();
     await App.setupMarketListeners();
 
     var tokenData = await $.getJSON("TechToken.json");
@@ -71,7 +92,6 @@ App = {
     await App.contracts.BidManager.setProvider(App.web3Provider);
     await App.setupBidManagerListeners();
 
-    await App.fetchItems();
     return App.setupPage();
   },
 
@@ -130,6 +150,7 @@ App = {
           if (!error) {
 
             console.log("Received Event ItemSold - {itemId: %s, Seller: %s}", Number(result.args.itemId), result.args.seller);
+            App.fetchBalance();
 
             if (result.args.seller == App.account.hash) {
               console.log("finalizing Item State");
@@ -340,13 +361,15 @@ App = {
     event.preventDefault();
     var button = $(event.target);
     var card = button.closest(".marketplace-item");
+    var bidButton = card.find(".btn-bid");
+    var bidPrivatelyButton = card.find(".btn-bid-privately");
     var itemId = card.data("id");
     var itemSeller = card.data("seller");
     var itemPrice = card.data("price");
     var txnPrivateFor = isPrivate ? [App.getPublicKey(itemSeller), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor; //TODO: move to function
 
-    button.toggleClass("disabled");
-    button.prop("disabled", true);
+    bidButton.toggleClass("disabled", true);
+    bidPrivatelyButton.toggleClass("disabled", true);
 
     console.log("isPrivate: ", isPrivate);
     console.log("txnPrivateFor: ", txnPrivateFor);
@@ -358,18 +381,16 @@ App = {
       .then(function(tokenContract) {
         console.log("App.marketAddress: ", App.marketAddress);
         return tokenContract.approve(App.marketAddress, itemPrice, {
-            from: App.account.hash,
-            privateFor: txnPrivateFor, //TODO: change that only account + bank can see?
-            gas: App.TXN_GAS
+          from: App.account.hash,
+          privateFor: txnPrivateFor, //TODO: change that only account + bank can see?
+          gas: App.TXN_GAS
         })
         .then((res) => {
-          button.toggleClass("disabled");
-          console.log(res);
-          App.fetchBalance();
+          console.log("tokenContract.approve() => ", res);
         })
         .catch(function(error) {
-          button.toggleClass("disabled");
-          button.prop("disabled", false);
+          bidButton.toggleClass("disabled", false);
+          bidPrivatelyButton.toggleClass("disabled", false);
           console.log(error);
         });
       });
@@ -385,12 +406,12 @@ App = {
         });
       })
       .then((res) => {
-        console.log(res);
-      })
-      .catch(function(error) {
-        button.toggleClass("disabled");
-        button.prop("disabled", false);
-        console.log(error);
+          console.log("bidManager.createBid() => ", res);
+        })
+        .catch(function(error) {
+          bidButton.toggleClass("disabled", false);
+          bidPrivatelyButton.toggleClass("disabled", false);
+          console.log(error);
       });
   },
 
@@ -406,7 +427,6 @@ App = {
     var itemId = card.data("id");
     var itemSeller = card.data("seller");
     var isPrivate = card.data("isprivate");
-    // var itemPrice = card.data("price");
     var txnPrivateFor = isPrivate ? [App.getPublicKey(itemSeller), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor; //TODO: move to function
 
     console.log("isPrivate (handleSelling): ", isPrivate);

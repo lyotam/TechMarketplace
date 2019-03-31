@@ -33,8 +33,7 @@ const createItems = async function() {
     data.map(async (item, index) => {
 
       var owner = accounts[index % NUM_ACCOUNTS].address;
-      console.log("owner: ", owner);
-
+      
       return await this.createItem(owner, item.name, item.image, item.price, {
         privateFor: publicKeys,
         gas: TXN_GAS
