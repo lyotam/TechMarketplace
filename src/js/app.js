@@ -10,6 +10,8 @@ App = {
   ITEM_BUYER_IDX: 6,
   ITEM_STATE_IDX: 7,
   ITEM_STATE_SOLD: 1,
+  SELLER_KEY: "seller",
+  ISPRIVATE_KEY: "isPrivate",
   NULL_ADDRESS: "0x0000000000000000000000000000000000000000",
   BANK_ADDRESS: "0x9186eb3d20cbd1f5f992a950d808c4495153abd5",
   TXN_GAS: 900000,
@@ -87,18 +89,14 @@ App = {
           if (!error) {
             console.log("Received Event BidCreated - {bidId: %s, itemId: %s, buyer: %s, seller: %s}", result.args.bidId, Number(result.args.itemId), result.args.buyer, result.args.seller);
 
-            // var seller = result.args.seller; 
-            // console.log("item seller: ", seller);
-
             if (result.args.seller == App.account.hash) {
               console.log("Seller received bid and executing the deal");
 
               App.contracts.Market.deployed()
                 .then(market => {
-                  console.log("market: ", market.address);
                   return market.executeSale(Number(result.args.itemId), result.args.bidId, {
                     from: App.account.hash,
-                    privateFor: App.inclusivePrivateFor, //[App.getPublicKey(result.args.buyer), App.getPublicKey(App.BANK_ADDRESS)],  //TODO: 1) move to function 2)currently will only execute privately -- to change?
+                    privateFor: App.inclusivePrivateFor, 
                     gas: App.TXN_GAS
                   });
                 })
@@ -111,6 +109,12 @@ App = {
             }             
           } else
               console.log(error);
+        });
+
+        bidManager.BidAccepted().watch(function(error, result) {
+            if (!error) {
+              console.log("Received Event BidAccepted - {bidId: %s}", result.args.bidId);
+            } 
         });
       });
   },
@@ -194,12 +198,12 @@ App = {
             console.log("Received Event ItemOnSale - {itemId: %s}", Number(result.args.itemId));
             console.log("Updating Item State");
 
-            market.getItem(Number(result.args.itemId))  //TODO: MOVE TO FUNCTION
+            market.getItem(Number(result.args.itemId))  
               .then(function(marketplaceItem) {
       
-                var card = $(`[data-id="${marketplaceItem[App.ITEM_ID_IDX]}"]`);
-                card.attr("data-seller", marketplaceItem[App.ITEM_SELLER_IDX]); 
+                var card = $(`[data-id="${result.args.itemId}"]`);
                 App.fillElement(marketplaceItem, card);
+                localStorage.setItem(App.SELLER_KEY + result.args.itemId, marketplaceItem[App.ITEM_SELLER_IDX]);
             });      
           } else
                 console.log(error);
@@ -227,12 +231,12 @@ App = {
           await instance.getItem(id)
             .then(function(marketplaceItem) {
 
-              // console.log("marketplaceItem: ", marketplaceItem);                 //TODO: change to itemEl.find(".marketplace-item") var
               var itemEl = App.fillElement(marketplaceItem, itemTemplate);
               itemEl.find(".marketplace-item").attr("data-id", marketplaceItem[App.ITEM_ID_IDX]);
-              itemEl.find(".marketplace-item").attr("data-seller", marketplaceItem[App.ITEM_SELLER_IDX]);
               itemEl.find(".marketplace-item").attr("data-price", marketplaceItem[App.ITEM_PRICE_IDX]);  
               itemRow.append(itemEl.html());
+
+              localStorage.setItem(App.SELLER_KEY + id, marketplaceItem[App.ITEM_SELLER_IDX]);
           });
         }
       });
@@ -344,7 +348,7 @@ App = {
     var bidButton = card.find(".btn-bid");
     var bidPrivatelyButton = card.find(".btn-bid-privately");
     var itemId = card.data("id");
-    var itemSeller = card.data("seller");
+    var itemSeller = localStorage.getItem(App.SELLER_KEY + itemId);
     var itemPrice = card.data("price");
     var txnPrivateFor = App.getTxnPrivateFor(itemSeller, isPrivate); 
 
@@ -355,7 +359,7 @@ App = {
     console.log("txnPrivateFor: ", txnPrivateFor);
     console.log("itemSeller (handleBidding): ", itemSeller);
 
-    localStorage.setItem(itemId, isPrivate);
+    localStorage.setItem(App.ISPRIVATE_KEY + itemId, isPrivate);
 
     await App.contracts.CashToken.deployed()
       .then(function(tokenContract) {
@@ -377,7 +381,6 @@ App = {
     await App.contracts.BidManager.deployed()
       .then(function(bidManager){
         console.log("Creating bid: {itemId: %s, bidPrice: %s}", itemId, itemPrice);
-        // console.log("bidManager.createBid(%s, %s, { from: %s, privateFor: %s, });", itemId, itemPrice, App.account.hash, txnPrivateFor.toString());
         return bidManager.createBid(itemId, itemPrice, {
           from: App.account.hash,
           privateFor: txnPrivateFor,
@@ -404,8 +407,8 @@ App = {
     var button = $(event.target);
     var card = button.closest(".marketplace-item");
     var itemId = card.data("id");
-    var itemSeller = card.data("seller");
-    var isPrivate = JSON.parse(localStorage.getItem(itemId));
+    var itemSeller = localStorage.getItem(App.SELLER_KEY + itemId);
+    var isPrivate = JSON.parse(localStorage.getItem(App.ISPRIVATE_KEY + itemId));
     var txnPrivateFor = App.getTxnPrivateFor(itemSeller, isPrivate);
 
     console.log("isPrivate (handleSelling): ", isPrivate);
@@ -434,7 +437,7 @@ App = {
       })
       .then((res) => {
         button.toggleClass("disabled");   
-        localStorage.removeItem(itemId);  
+        localStorage.removeItem(App.ISPRIVATE_KEY + itemId);  
         console.log(res);
       })
       .catch(function(error) {
