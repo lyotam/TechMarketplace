@@ -382,12 +382,12 @@ App = {
         });
       })
       .then((res) => {
-          console.log("bidManager.createBid() => ", res);
-        })
-        .catch(function(error) {
-          bidButton.toggleClass("disabled", false);
-          bidPrivatelyButton.toggleClass("disabled", false);
-          console.log(error);
+        console.log("bidManager.createBid() => ", res);
+      })
+      .catch(function(error) {
+        bidButton.toggleClass("disabled", false);
+        bidPrivatelyButton.toggleClass("disabled", false);
+        console.log(error);
       });
   },
 
