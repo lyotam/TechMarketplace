@@ -368,17 +368,11 @@ App = {
           privateFor: txnPrivateFor, 
           gas: App.TXN_GAS
         })
-        .then((res) => {
-          console.log("tokenContract.approve() => ", res);
-        })
-        .catch(function(error) {
-          bidButton.toggleClass("disabled", false);
-          bidPrivatelyButton.toggleClass("disabled", false);
-          console.log(error);
-        });
-      });
-
-    await App.contracts.BidManager.deployed()
+      })
+      .then((res) => {
+        console.log("tokenContract.approve() => ", res);
+      })
+      .then(() => App.contracts.BidManager.deployed())
       .then(function(bidManager){
         console.log("Creating bid: {itemId: %s, bidPrice: %s}", itemId, itemPrice);
         return bidManager.createBid(itemId, itemPrice, {
