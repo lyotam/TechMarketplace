@@ -1,27 +1,46 @@
-# MLH Localhost &mdash; Blockchain Basics: An Introduction to J.P. Morgan's Quorum
+# TechMarketplace: A Sample App Utilizing Quorum
 
-This repository contains the code for an example Quorum network for the **Blockchain Basics: An Introduction to J.P. Morgan's Quorum**.
+TechMarketplace is an example application running on top of a Quorum network which allows users to bid for and offer virtual hackathon gear for sale in an interactive marketplace. This app is based on what was originally developed for the MLH Localhost Quorum workshop, which demonstrates how to run a simple Ethereum application and how to write a simple Smart Contract that interacts with the Ethereum-based network. The original app can be found [here](https://github.com/MLH/mlh-localhost-tech-marketplace).
 
-This project is **one of two parts** required for the **Quorum workshop**. This repository contains the code to run [TechMarketplace](https://github.com/MLH/mlh-localhost-tech-marketplace) which runs the application layer. The second part needed is [Quorum Network](https://github.com/MLH/mlh-localhost-quorum-network) which runs the Ethereum network layer.
+### Goals 
 
-### TechMarketplace [[Docs](https://github.com/MLH/mlh-localhost-tech-marketplace)]
+Produce an example which will demonstrate some of the various advantages and challenges Quorum brings to the table, while still having a simple enough flow to understand. The example should also highlight the private state / public state usage and design implications in a practical use case, as a marketplace. 
+ 
+### Design & Flow
+This design introduces these key changes:
+-	All items are owned by an account.
+-	A sale is between two accounts, and is reflected in their respective balances.
+-	A buyer can purchase an item privately and “publicly” (privately inclusive) from seller. When Item is sold privately, other marketplace participants will know the item was sold, but will not know who was the buyer (appears as Buyer: “Unknown” in the UI). 
+-	In order to accomplish it, the seller will update “publicly” the item state to sold, which in it’s turn will envoke an event notifiying all participants on the sale. 
+-	TechToken: ERC20 standard implementation, used as marketplace cash token. To create a bid, an account needs to approve funds for Market which will use them to execute sale. 
+-	Bidding mechanism, operated by BidManager, which enforces the use of a single bid for an item, and discards the unseccessful bids. 
+-	Bank node, which owns the TechToken and provides funds for accounts and is privy to all txns. 
 
-TechMarketplace is an example application running on top of the Quorum network and allows users to buy and sell virtual hackathon gear. It demonstrates how to run an simple Ethereum application and how to write simple Smart Contracts that interact with the Ethereum-based network.
+The implementation of reselling an item that was purchased via private txns presented a challenge, and several approaches were considered.
+Possible approaches:
+1.	Let anyone reoffer Item for sale. 
+Issue: doesn't reflect the ownership of item. Relies on the app level to enforce ownership.
+2.	Create new item with same properties (newId) and put up for sale. 
+Issue: similar to before, but actually quite realistic as it's similar to existing marketplace models today. Also, will not affect purchased item ownership.
+3.	During sale, generate Random string that only seller will have, and store it's hash on the item. After the sale is complete, seller will transfer the string off-chain to buyer, which will use it to put the item back on sale. Issue: relies on seller to provide string off-chain (not enforceable on chain), but also realistic. More complicated mechanism.
+4.	When buyer wishes to remove their anonymity and resell item, they will ask the original seller to change “publicly” the ownership on the item.
+Issue: similar to before, but realistic and less complicated.
 
-### Quorum Network [[Docs](https://github.com/MLH/mlh-localhost-quorum-network)]
-
-[Quorum](https://github.com/jpmorganchase/quorum) is an protocol designed by JP Morgan chase to address the lack of data privacy on Ethereum platforms. With this, Quorum features several enhancements including private transactions/contracts, new consensus mechansims, and higher performance. It is a fork of the [go-ethereum](https://github.com/ethereum/go-ethereum) protocol and is updated with go-etherum releases.
-
-We use Quorum as our Ethereum protocol in this project. We use a version of Quorum's [7nodes](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) example that runs several Quorum nodes in parallel using a virtual machine.
-
-**Important note** A Quorum network must be running locally in order for the TechMarketplace application to work. This project includes instructions on how to run the Quorum network locally.
+Eventually, approach 4 was selected and implemented.
 
 ## Requirements
+### Quorum
+This app uses Quorum as the Ethereum protocol in this project. It can be run on top of Quorum's [7nodes](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) example that runs several Quorum nodes in parallel using a virtual machine.
+Please follow the steps mentioned in the [7 nodes repo](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) & the wider [quorum-examples repo](https://github.com/jpmorganchase/quorum-examples) to setup & run the local Quorum network **with these modification**:
+1. Adding to PRIVATE_CONFIG the parameter **--rpccorsdomain "http://localhost:3000"**, in raft-start.sh / instanbul-start.sh / docker-compose.yml, depending on usage.
+2. Reduce the number of nodes to 4 by following steps 1,2 [here](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes#reducing-the-number-of-nodes).
 
-* Install [Docker](https://docs.docker.com/install/) - Tool for building and managing projects through containers
+
+### App
 * Install [NodeJS](https://nodejs.org) - Event-driven Javascript runtime environment
 * Install [NPM](https://www.npmjs.com/) - Popular package manager for JavaScript
-* Install [Truffle](http://truffleframework.com/) - Development framework for Ethereum applications
+* Install [Truffle](http://truffleframework.com/) - Development framework for Ethereum applications (This app was last tested on Truffle 4.1.15 with Solidity v0.4.25)
+
 
 ## Installation
 
@@ -36,52 +55,17 @@ $ npm install
 To get your TechMarketplace application up and running locally, you will need to run the Quorum network, compile your contracts, migrate those contracts to the network, populate those contracts with data, then run your application:
 
 ### Quorum network
-
-```sh
-$ docker pull mlhacks/mlh-localhost-quorum-network
-$ docker run -it -p 22000:22000 -p 22001:22001 -p 22002:22002 mlhacks/mlh-localhost-quorum-network
-```
+To setup & run the Quorum network, follow the steps [here](https://github.com/jpmorganchase/quorum-examples#getting-started).
 
 ### TechMarketplace
 
 ```sh
 $ truffle compile
-$ truffle migrate
+$ truffle migrate --reset
 $ npm run seed
 $ npm start
 ```
 
-## Commands
-
-Inside the TechMarketplace project, you can run some built-in commands:
-
-### `npm start` or `yarn start`
-
-Runs the app in development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will automatically reload if you make changes to the code.<br>
-You will see the build errors and lint warnings in the console.
-
-### `npm run compile` or `truffle compile`
-
-Compiles the Solidity contracts (files with the `.sol` extension) in the `contracts/` directory. This is necessary to run every time you make a change to one of the contracts. Truffle will only compile the contracts that were changed since the last compile.
-
-Compiled versions of these contracts will be placed in the `build/contracts/` directory.
-
-Additional [documentation](http://truffleframework.com/docs/getting_started/compile).
-
-### `npm run migrate` or `truffle migrate`
-
-Migrations are JavaScript files that deploy your compiled contracts to the Ethereum network. To see your contract on the network, you must run `truffle migrate` after you run the network.
-
-All migrations are located within the `migrations/` directory. To add a new contract to the network, you must add it to the `migrations/2_deploy_contract.js` file or create a new migration file.
-
-Additional [documentation](http://truffleframework.com/docs/getting_started/migrations)
-
-### `npm run seed` or `truffle exec seed.js`
-
-Once your contracts are live on the network, you need to seed the network with default data. We do this by running the `seed.js` script which populates our contract with data from `items.json`.
 
 ## Additional Resources
 
