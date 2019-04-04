@@ -26,8 +26,8 @@ We use Quorum as our Ethereum protocol in this project. We use a version of Quor
 ## Installation
 
 ```sh
-$ git clone https://github.com/MLH/mlh-localhost-tech-marketplace.git
-$ cd mlh-localhost-tech-marketplace
+$ git clone https://github.com/lyotam/TechMarketplace.git
+$ cd TechMarketplace
 $ npm install
 ```
 
