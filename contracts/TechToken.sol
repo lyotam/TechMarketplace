@@ -7,10 +7,11 @@
 // Decimals    : 18
 // ----------------------------------------------------------------------------
 
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.25;
 
 import "./IERC20.sol";
 import "./SafeMath.sol";
+// import "./IApproveAndCallFallBack.sol";
 
 contract TechToken is IERC20 {
     using SafeMath for uint;
@@ -76,7 +77,7 @@ contract TechToken is IERC20 {
     // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
+        allowed[msg.sender][spender] = allowed[msg.sender][spender].add(tokens);
         emit Approval(msg.sender, spender, tokens);
         return true;
     }
@@ -117,7 +118,7 @@ contract TechToken is IERC20 {
     // function approveAndCall(address spender, uint tokens, bytes memory data) public returns (bool success) {
     //     allowed[msg.sender][spender] = tokens;
     //     emit Approval(msg.sender, spender, tokens);
-    //     ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, address(this), data);
+    //     IApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, data);
     //     return true;
     // }
 
