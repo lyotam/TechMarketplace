@@ -1,18 +1,27 @@
 App = {
   ACCOUNT_NAME_IDX: 0,
   ACCOUNT_KEY_IDX: 1,
+  ITEM_ID_IDX: 0,
   ITEM_SELLER_IDX: 1,
-  ITEM_STATE_ID_IDX: 0,
-  ITEM_STATE_IDX: 1,
+  ITEM_NAME_IDX: 2,
+  ITEM_IMG_IDX: 3,
+  ITEM_PRICE_IDX: 4,
+  ITEM_NICKNAME_IDX: 5,
   ITEM_BUYER_IDX: 6,
+  ITEM_STATE_IDX: 7,
   ITEM_STATE_SOLD: 1,
+  SELLER_KEY: "seller",
+  ISPRIVATE_KEY: "isPrivate",
   NULL_ADDRESS: "0x0000000000000000000000000000000000000000",
+  BANK_ADDRESS: "0x9186eb3d20cbd1f5f992a950d808c4495153abd5",
+  TXN_GAS: 900000,
 
   web3Provider: null,
   contracts: {},
   account: null,
   inclusivePrivateFor: null,
   address2account: {},
+  marketAddress: "",
 
   /**
    * Initializes web application using current account and provider
@@ -28,7 +37,7 @@ App = {
 
     App.account.hash = web3.eth.accounts[0];
 
-    /* Holds all other accounts' keys */
+    /* Holds an array of all other accounts' public keys */
     App.inclusivePrivateFor = $(App.accounts)
       .not([App.account])
       .get()
@@ -36,27 +45,170 @@ App = {
         return acc.key;
       });
 
+    console.log("inclusivePrivateFor: ", App.inclusivePrivateFor);
+
     accounts.forEach(function(account) {
       App.address2account[account.address] = [account.name, account.key];
     });
     App.address2account[App.NULL_ADDRESS] = ["Unknown", ""]; 
 
-    return App.initContract();
+    return App.initContracts();
   },
 
   /**
    * Initializes smart contract on web application
    */
-  initContract: function() {
-    $.getJSON("Market.json", function(data) {
-      App.contracts.Market = TruffleContract(data);
+  initContracts: async function() {
+    var marketData = await $.getJSON("Market.json");
+    App.contracts.Market = await TruffleContract(marketData);
+    await App.contracts.Market.setProvider(App.web3Provider);
+    await App.fetchItems();
+    await App.setupMarketListeners();
 
-      App.contracts.Market.setProvider(App.web3Provider);
+    var tokenData = await $.getJSON("TechToken.json");
+    App.contracts.CashToken = await TruffleContract(tokenData);
+    await App.contracts.CashToken.setProvider(App.web3Provider);
 
-      return App.fetchItems();
-    });
+    var bidManagerData = await $.getJSON("BidManager.json");
+    App.contracts.BidManager = await TruffleContract(bidManagerData);
+    await App.contracts.BidManager.setProvider(App.web3Provider);
+    await App.setupBidManagerListeners();
 
     return App.setupPage();
+  },
+
+  /**
+   * Setup BidManager.sol event listeners
+   */
+  setupBidManagerListeners: function() {
+    App.contracts.BidManager.deployed()
+    .then(bidManager => {
+
+        /* BidCreated event listener */
+        bidManager.BidCreated().watch(function(error, result) {
+          if (!error) {
+            console.log("Received Event BidCreated - {bidId: %s, itemId: %s, buyer: %s, seller: %s}", result.args.bidId, Number(result.args.itemId), result.args.buyer, result.args.seller);
+
+            if (result.args.seller == App.account.hash) {
+              console.log("Seller received bid and executing the deal");
+
+              App.contracts.Market.deployed()
+                .then(market => {
+                  return market.executeSale(Number(result.args.itemId), result.args.bidId, {
+                    from: App.account.hash,
+                    privateFor: App.inclusivePrivateFor, 
+                    gas: App.TXN_GAS
+                  });
+                })
+                .then((res) => {
+                  console.log(res);
+                })
+                .catch(function(error) {      
+                  console.log(error);
+                });
+            }             
+          } else
+              console.log(error);
+        });
+
+        bidManager.BidAccepted().watch(function(error, result) {
+            if (!error) {
+              console.log("Received Event BidAccepted - {bidId: %s}", result.args.bidId);
+            } 
+        });
+      });
+  },
+
+    /**
+   * Setup Market.sol event listeners
+   */
+  setupMarketListeners: function() {
+    App.contracts.Market.deployed()
+      .then(market => {
+
+        // set market address
+        App.marketAddress = market.address;
+
+        /* ItemSold event listener */
+        market.ItemSold().watch(function(error, result) {
+          if (!error) {
+
+            console.log("Received Event ItemSold - {itemId: %s, Seller: %s}", Number(result.args.itemId), result.args.seller);
+            App.fetchBalance();
+
+            if (result.args.seller == App.account.hash) {
+              console.log("finalizing Item State");
+              
+              market.markItemSold(Number(result.args.itemId), {
+                from: App.account.hash,
+                privateFor: App.inclusivePrivateFor,
+                gas: App.TXN_GAS
+              });
+            }             
+          } else
+              console.log(error);
+        });
+
+        /* ItemStateSold event listener */
+        market.ItemStateSold().watch(function(error, result) {
+          if (!error) {
+
+            console.log("Received Event ItemStateSold - {itemId: %s}", Number(result.args.itemId));
+            console.log("Updating Item State");
+
+            market.getItem(Number(result.args.itemId))
+              .then(function(marketplaceItem) {
+  
+                var card = $(`[data-id="${marketplaceItem[App.ITEM_ID_IDX]}"]`).last();
+                App.fillElement(marketplaceItem, card);
+                App.fetchBalance();
+            });      
+          } else
+                console.log(error);
+        });
+
+        /* ItemReofferRequest event listener */
+        market.ItemReofferRequest().watch(function(error, result) {
+          if (!error) {
+            console.log("Received Event ItemReofferRequest - {itemId: %s, Seller: %s, Buyer: %s}", Number(result.args.itemId), result.args.seller, result.args.buyer);
+            
+            if (result.args.seller == App.account.hash) {
+              console.log("Reoffering item %s for sale", Number(result.args.itemId));
+
+              market.reofferItemForSale(Number(result.args.itemId), result.args.buyer, {
+                from: App.account.hash,
+                privateFor: App.inclusivePrivateFor,
+                gas: App.TXN_GAS
+              })
+              .then((res) => {       
+                console.log(res);
+              })
+              .catch(function(error) {      
+                console.log(error);
+              });   
+            }
+          } else
+                console.log(error);
+        });
+
+        /* ItemOnSale event listener */
+        market.ItemOnSale().watch(function(error, result) {
+          if (!error) {
+
+            console.log("Received Event ItemOnSale - {itemId: %s}", Number(result.args.itemId));
+            console.log("Updating Item State");
+
+            market.getItem(Number(result.args.itemId))  
+              .then(function(marketplaceItem) {
+      
+                var card = $(`[data-id="${result.args.itemId}"]`);
+                App.fillElement(marketplaceItem, card);
+                localStorage.setItem(App.SELLER_KEY + result.args.itemId, marketplaceItem[App.ITEM_SELLER_IDX]);
+            });      
+          } else
+                console.log(error);
+        });
+      }); 
   },
 
   /**
@@ -68,51 +220,6 @@ App = {
     var itemTemplate = $("#itemTemplate");
 
     App.contracts.Market.deployed()
-      .then(contract => {
-
-        /* ItemSold event listener */
-        contract.ItemSold().watch(function(error, result) {
-          if (!error) {
-
-            console.log("Received Event ItemSold - {itemId: %s, Seller: %s}", Number(result.args.itemId), result.args.seller);
-
-            if (result.args.seller == App.account.hash) {
-              console.log("finalizing Item State");
-              
-              instance.markItemSold(Number(result.args.itemId), {
-                from: App.account.hash,
-                privateFor: App.inclusivePrivateFor,
-              });
-            }             
-          } else
-              console.log(error);
-        });
-
-        /* ItemStateSold event listener */
-        contract.ItemStateSold().watch(function(error, result) {
-          if (!error) {
-
-            console.log("Received Event ItemStateSold - {itemId: %s}", Number(result.args.itemId));
-            console.log("Updating Item State");
-
-            instance.getItemState(Number(result.args.itemId))
-        
-            .then(itemState => {
-  
-              return instance.getItem(Number(itemState[App.ITEM_STATE_ID_IDX]))
-              .then(function(marketplaceItem) {
-  
-                var card = $(`[data-id="${marketplaceItem[0]}"]`);   
-                App.fillElement(marketplaceItem, card, itemState[App.ITEM_STATE_IDX]);
-                App.fetchBalance();
-              });
-            });      
-          } else
-                console.log(error);
-        });
-      }); 
-
-    App.contracts.Market.deployed()
       .then(function(result) {
         instance = result;
         return instance.getSize();
@@ -121,20 +228,16 @@ App = {
         
         for (id = 0; id < size; id++) {
 
-          await instance.getItemState(id)          
-          .then(itemState => {
-
-            return instance.getItem(Number(itemState[App.ITEM_STATE_ID_IDX]))
+          await instance.getItem(id)
             .then(function(marketplaceItem) {
 
-              console.log("marketplaceItem: ", marketplaceItem);
-  
-              var itemEl = App.fillElement(marketplaceItem, itemTemplate, itemState[App.ITEM_STATE_IDX]);
-              itemEl.find(".marketplace-item").attr("data-id", marketplaceItem[0]);
-  
+              var itemEl = App.fillElement(marketplaceItem, itemTemplate);
+              itemEl.find(".marketplace-item").attr("data-id", marketplaceItem[App.ITEM_ID_IDX]);
+              itemEl.find(".marketplace-item").attr("data-price", marketplaceItem[App.ITEM_PRICE_IDX]);  
               itemRow.append(itemEl.html());
-            });
-          })
+
+              localStorage.setItem(App.SELLER_KEY + id, marketplaceItem[App.ITEM_SELLER_IDX]);
+          });
         }
       });
 
@@ -150,7 +253,7 @@ App = {
         return instance.getBalance(App.account.hash);
       })
       .then(function(balance) {
-        $(".account-balance").text(Number(web3.fromWei(balance)).toFixed(2));
+        $(".account-balance").text(Number(balance));
       })
       .catch(function(error) {
         console.log(error);
@@ -179,30 +282,29 @@ App = {
   /**
    * Updates HTML card element with data for marketplace item
    */
-  fillElement: function(data, element, itemState) {
+  fillElement: function(data, element) {
 
-    var ether = Number(web3.fromWei(data[4])).toFixed(2);
-    var isOwnedByAccount = data[App.ITEM_SELLER_IDX] == App.account.hash;
-    var isSold = Number(itemState) == App.ITEM_STATE_SOLD;
-    var nickname = data[5].length > 0 ? `"${data[5]}"` : "";
-    var seller = `Seller: "${App.address2account[data[App.ITEM_SELLER_IDX]][App.ACCOUNT_NAME_IDX]}"`;
-    var buyer =  isSold ? `Buyer: "${App.address2account[data[App.ITEM_BUYER_IDX]][App.ACCOUNT_NAME_IDX]}"` : "";
+    var price = Number(data[App.ITEM_PRICE_IDX]);
+    var isSold = Number(data[App.ITEM_STATE_IDX]) == App.ITEM_STATE_SOLD;
+    var isOwnedByAccount = (data[App.ITEM_SELLER_IDX] == App.account.hash && !isSold) || data[App.ITEM_BUYER_IDX] == App.account.hash;
+    var nickname = data[App.ITEM_NICKNAME_IDX].length > 0 ? `"${data[App.ITEM_NICKNAME_IDX]}"` : "";
+    var seller = `Seller: "${App.getName(data[App.ITEM_SELLER_IDX])}"`;
+    var buyer =  isSold ? `Buyer: "${App.getName(data[App.ITEM_BUYER_IDX])}"` : "";
 
-    console.log("Item State: ", isSold);
+    element.find(".btn-bid").toggle(!isSold);
+    element.find(".btn-sold").toggle(isSold && !isOwnedByAccount);
+    element.find(".btn-sell").toggle(isSold && isOwnedByAccount);
+    element.find(".btn-bid-privately").toggle(!isSold);
+    element.find(".btn-bid").toggleClass("disabled", isOwnedByAccount);
+    element.find(".btn-bid-privately").toggleClass("disabled", isOwnedByAccount);
+    element.find(".btn-sell").toggleClass("disabled", false);
 
-    element.find(".btn-buy").toggle(!isSold);
-    element.find(".btn-sold").toggle(isSold);
-    element.find(".btn-buy-privately").toggle(!isSold);
-    element.find(".btn-buy").toggleClass("disabled", isOwnedByAccount);
-    element.find(".btn-buy-privately").toggleClass("disabled", isOwnedByAccount);
-
-    element.find(".card-item-name").text(data[2]);
-    element.find(".card-img-top").attr("src", data[3]);
-    element.find(".card-price-amount").text(ether);
+    element.find(".card-item-name").text(data[App.ITEM_NAME_IDX]);
+    element.find(".card-img-top").attr("src", data[App.ITEM_IMG_IDX]);
+    element.find(".card-price-amount").text(price);
     element.find(".card-item-nickname").text(nickname);
 
     element.find(".card-item-seller").text(seller);
-    element.find(".btn-sold").toggle(isSold);
     element.find(".card-item-buyer").text(buyer);
 
     return element;
@@ -212,12 +314,13 @@ App = {
    * Bind actions with HTML elements
    */
   bindEvents: function() {
-    $(document).on("click", ".btn-buy", function(event) {
-      App.handleBuying(event, false);    
+    $(document).on("click", ".btn-bid", function(event) {
+      App.handleBidding(event, false);    
     });
-    $(document).on("click", ".btn-buy-privately", function(event) {
-      App.handleBuying(event, true);    
+    $(document).on("click", ".btn-bid-privately", function(event) {
+      App.handleBidding(event, true);    
     });
+    $(document).on("click", ".btn-sell", App.handleSelling);
     $(document).on("keypress", ".card-input-name", App.handleNickname);
     $(document).on("click", ".btn-edit", App.toggleEdit);
   },
@@ -233,53 +336,112 @@ App = {
     parent.find(".card-input-name").toggle(true);
   },
 
-  /**
-   * Handles action when user clicks 'Buy'. Calls
-   * the buying action on the smart contract.
+    /**
+   * Handles action when user clicks 'Bid'. Calls
+   * the creatBid action on the BidManager, after 
+   * approving Market the bid amount tokens.
    */
-  handleBuying: function(event, isPrivate) {
+  handleBidding: async function(event, isPrivate) {
     event.preventDefault();
-    var instance;
+    var button = $(event.target);
+    var card = button.closest(".marketplace-item");
+    var bidButton = card.find(".btn-bid");
+    var bidPrivatelyButton = card.find(".btn-bid-privately");
+    var itemId = card.data("id");
+    var itemSeller = localStorage.getItem(App.SELLER_KEY + itemId);
+    var itemPrice = card.data("price");
+    var txnPrivateFor = App.getTxnPrivateFor(itemSeller, isPrivate); 
+
+    bidButton.toggleClass("disabled", true);
+    bidPrivatelyButton.toggleClass("disabled", true);
+
+    console.log("isPrivate: ", isPrivate);
+    console.log("txnPrivateFor: ", txnPrivateFor);
+    console.log("itemSeller (handleBidding): ", itemSeller);
+
+    localStorage.setItem(App.ISPRIVATE_KEY + itemId, isPrivate);
+
+    await App.contracts.CashToken.deployed()
+      .then(function(tokenContract) {
+        return tokenContract.approve(App.marketAddress, itemPrice, {
+          from: App.account.hash,
+          privateFor: txnPrivateFor, 
+          gas: App.TXN_GAS
+        })
+      })
+      .then((res) => {
+        console.log("tokenContract.approve() => ", res);
+      })
+      .then(() => App.contracts.BidManager.deployed())
+      .then(function(bidManager){
+        console.log("Creating bid: {itemId: %s, bidPrice: %s}", itemId, itemPrice);
+        return bidManager.createBid(itemId, itemPrice, {
+          from: App.account.hash,
+          privateFor: txnPrivateFor,
+          gas: App.TXN_GAS 
+        });
+      })
+      .then((res) => {
+        console.log("bidManager.createBid() => ", res);
+      })
+      .catch(function(error) {
+        bidButton.toggleClass("disabled", false);
+        bidPrivatelyButton.toggleClass("disabled", false);
+        console.log(error);
+      });
+  },
+
+    /**
+   * Handles action when user clicks 'Sell'. Calls
+   * the creatBid action on the BidManager, after 
+   * approving Market the bid amount tokens.
+   */
+  handleSelling: async function(event) {
+    event.preventDefault();
     var button = $(event.target);
     var card = button.closest(".marketplace-item");
     var itemId = card.data("id");
+    var itemSeller = localStorage.getItem(App.SELLER_KEY + itemId);
+    var isPrivate = JSON.parse(localStorage.getItem(App.ISPRIVATE_KEY + itemId));
+    var txnPrivateFor = App.getTxnPrivateFor(itemSeller, isPrivate);
+
+    console.log("isPrivate (handleSelling): ", isPrivate);
 
     button.toggleClass("disabled");
     button.prop("disabled", true);
 
-    App.contracts.Market.deployed()
-      .then(function(contract) {
-        instance = contract;
-        return instance.getItem(itemId);
+    await App.contracts.Market.deployed()
+      .then(function(market) {
+        if (isPrivate) {
+          console.log("requestItemReoffer as txn was private");
+          return market.requestItemReoffer(itemId, {
+            from: App.account.hash,
+            privateFor: txnPrivateFor,
+            gas: App.TXN_GAS
+          })
+        }
+        else {
+          console.log("reofferItemForSale as txn was public");
+          return market.reofferItemForSale(itemId, App.account.hash, {
+            from: App.account.hash,
+            privateFor: txnPrivateFor,
+            gas: App.TXN_GAS
+          })
+        }
       })
-      .then(function(item) {
-
-        var itemSeller = item[App.ITEM_SELLER_IDX];
-        console.log("itemSeller: ", itemSeller);
-        console.log("address2account: ", App.address2account);
-
-        var txnPrivateFor = isPrivate ? [App.address2account[itemSeller][App.ACCOUNT_KEY_IDX]] : App.inclusivePrivateFor;
-
-        console.log("isPrivate: ", isPrivate);
-        console.log("txnPrivateFor: ", txnPrivateFor);
-        console.log("Buying item id: ", itemId);
-
-        return instance.buyItem(itemId, {
-          from: App.account.hash,
-          privateFor: txnPrivateFor,
-        });
-      })
-      .then(function(data) {
-        button.toggleClass("disabled");
-        App.fetchBalance();
+      .then((res) => {
+        button.toggleClass("disabled");   
+        localStorage.removeItem(App.ISPRIVATE_KEY + itemId);  
+        console.log(res);
       })
       .catch(function(error) {
         button.toggleClass("disabled");
         button.prop("disabled", false);
-
         console.log(error);
       });
   },
+
+
 
   /**
    * Handles action when user nicknames item. Creates
@@ -289,7 +451,6 @@ App = {
     if (event.which == 13) {
       // 'Enter' keypress
       var instance;
-      var itemState;
       var name = event.target.value;
       var card = $(event.target).closest(".marketplace-item");
       var itemId = card.data("id");
@@ -303,10 +464,6 @@ App = {
           });
         })
         .then(function() {
-          return instance.getItemState(itemId);
-        })
-        .then(function(state) {
-          itemState = state[App.ITEM_STATE_IDX];
           return instance.getItem(itemId);
         })
         .then(function(data) {
@@ -314,12 +471,34 @@ App = {
           card.find(".card-info").toggle(true);
           card.find(".card-input-name").toggle(false);
 
-          return App.fillElement(data, card, itemState);
+          return App.fillElement(data, card);
         })
         .catch(function(error) {
           console.log(error);
         });
     }
+  },
+
+  /**
+   * Returns the Public Key associated with given address
+   */
+  getPublicKey: function(address) {
+    return App.address2account[address][App.ACCOUNT_KEY_IDX];
+  },
+
+  /**
+   * Returns the account name associated with given address
+   */
+  getName: function(address) {
+    return App.address2account[address][App.ACCOUNT_NAME_IDX];
+  },
+
+  /**
+   * Returns an array containing the recipient public key & bank public key 
+   * or all recipients' public key, according to isPrivate
+   */
+  getTxnPrivateFor: function(privyAccount, isPrivate) {
+      return isPrivate ? [App.getPublicKey(privyAccount), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor; 
   },
 
   /**
