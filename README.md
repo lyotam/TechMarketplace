@@ -1,4 +1,5 @@
 # TechMarketplace: A Sample App Utilizing Quorum
+![TechMarketplace](TechMarketplace.PNG)
 
 TechMarketplace is an example application running on top of a Quorum network which allows users to bid for and offer virtual hackathon gear for sale in an interactive marketplace. This app is based on what was originally developed for the MLH Localhost Quorum workshop, which demonstrates how to run a simple Ethereum application and how to write a simple Smart Contract that interacts with the Ethereum-based network. The original app can be found [here](https://github.com/MLH/mlh-localhost-tech-marketplace).
 
