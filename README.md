@@ -12,8 +12,8 @@ This design introduces these key changes:
 -	All items are owned by an account.
 -	A sale is between two accounts, and is reflected in their respective balances.
 -	A buyer can purchase an item privately and “publicly” (privately inclusive) from seller. When Item is sold privately, other marketplace participants will know the item was sold, but will not know who was the buyer (appears as Buyer: “Unknown” in the UI). 
--	In order to accomplish it, the seller will update “publicly” the item state to sold, which in it’s turn will envoke an event notifiying all participants on the sale. 
--	TechToken: ERC20 standard implementation, used as marketplace cash token. To create a bid, an account needs to approve funds for Market which will use them to execute sale. 
+-	In order to accomplish it, the seller will update “publicly” the item state to 'Sold', which in it’s turn will envoke an event notifiying all participants of the sale. 
+-	TechToken: ERC20 standard implementation, used as marketplace cash token. To create a bid, an account has to approve funds for Market which will use them to execute sale. 
 -	Bidding mechanism, operated by BidManager, which enforces the use of a single bid for an item, and discards the unseccessful bids. 
 -	Bank node, which owns the TechToken and provides funds for accounts and is privy to all txns. 
 
@@ -23,15 +23,15 @@ Possible approaches:
 Issue: doesn't reflect the ownership of item. Relies on the app level to enforce ownership.
 2.	Create new item with same properties (newId) and put up for sale. 
 Issue: similar to before, but actually quite realistic as it's similar to existing marketplace models today. Also, will not affect purchased item ownership.
-3.	During sale, generate Random string that only seller will have, and store it's hash on the item. After the sale is complete, seller will transfer the string off-chain to buyer, which will use it to put the item back on sale. Issue: relies on seller to provide string off-chain (not enforceable on chain), but also realistic. More complicated mechanism.
-4.	When buyer wishes to remove their anonymity and resell item, they will ask the original seller to change “publicly” the ownership on the item.
+3.	During sale, generate random string that only seller will have, and store it's hash on the item. After the sale is complete, seller will transfer the string off-chain (or on-chain via private txn) to buyer, which will use it to put the item back on sale. Issue: may rely on seller to provide string off-chain (not enforceable on chain), but also realistic. Also, a more complicated mechanism.
+4.	When buyer wishes to remove their anonymity and resell item, they will ask the original seller to change “publicly” the ownership on the item through a private txn.
 Issue: similar to before, but realistic and less complicated.
 
 Eventually, approach 4 was selected and implemented.
 
 ## Requirements
 ### Quorum
-This app uses Quorum as the Ethereum protocol in this project. It can be run on top of Quorum's [7nodes](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) example that runs several Quorum nodes in parallel using a virtual machine.
+This app uses Quorum as the Ethereum protocol in this project. It can be run on top of Quorum's [7nodes example](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) that runs several Quorum nodes in parallel using a virtual machine.
 Please follow the steps mentioned in the [7 nodes repo](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) & the wider [quorum-examples repo](https://github.com/jpmorganchase/quorum-examples) to setup & run the local Quorum network **with these modification**:
 1. Adding to PRIVATE_CONFIG the parameter **--rpccorsdomain "http://localhost:3000"**, in raft-start.sh / instanbul-start.sh / docker-compose.yml, depending on usage.
 2. Reduce the number of nodes to 4 by following steps 1,2 [here](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes#reducing-the-number-of-nodes).
@@ -56,7 +56,7 @@ $ npm install
 To get your TechMarketplace application up and running locally, you will need to run the Quorum network, compile your contracts, migrate those contracts to the network, populate those contracts with data, then run your application:
 
 ### Quorum network
-To setup & run the Quorum network, follow the steps [here](https://github.com/jpmorganchase/quorum-examples#getting-started).
+To setup & run a Quorum network, follow the steps [here](https://github.com/jpmorganchase/quorum-examples#getting-started).
 
 ### TechMarketplace
 
