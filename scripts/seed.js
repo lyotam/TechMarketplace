@@ -5,12 +5,7 @@ const BidManager = artifacts.require("BidManager");
 const data = require("../src/json/items.json");
 const accounts = require("../src/json/accounts.json");
 
-var account1key = "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=";
-var account2key = "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=";
-var account3key = "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=";
-
-var publicKeys = [account1key, account2key, account3key];
-
+const PUBLIC_KEYS = accounts.slice(0,3).map(account => account.key);
 const NUM_ACCOUNTS = 3;
 const TXN_GAS = 900000;
 
@@ -35,7 +30,7 @@ const createItems = async function() {
       var owner = accounts[index % NUM_ACCOUNTS].address;
       
       return await this.createItem(owner, item.name, item.image, item.price, {
-        privateFor: publicKeys,
+        privateFor: PUBLIC_KEYS,
         gas: TXN_GAS
       });
     }),
@@ -57,7 +52,7 @@ module.exports = async function() {
     
     accounts.forEach(async account => {
       await token.transfer(account.address, 10, {
-        privateFor: publicKeys,
+        privateFor: PUBLIC_KEYS,
         gas: TXN_GAS  
       });
     });
@@ -65,7 +60,7 @@ module.exports = async function() {
     const bidManager = await BidManager.deployed();
 
     await bidManager.setMarket(market.address, {
-      privateFor: publicKeys,
+      privateFor: PUBLIC_KEYS,
       gas: TXN_GAS  
     });
 

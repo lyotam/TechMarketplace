@@ -3,11 +3,8 @@ var SafeMath = artifacts.require("SafeMath");
 var Market = artifacts.require("Market");
 var BidManager = artifacts.require("BidManager");
 
-var account1key = "BULeR8JyUWhiuuCMU/HLA0Q5pzkYT+cHII3ZKBey3Bo=";
-var account2key = "QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc=";
-var account3key = "1iTZde/ndBHvzhcl7V68x44Vx7pl8nwx9LqnM/AfJUg=";
+const PUBLIC_KEYS = require("../src/json/accounts.json").slice(0,3).map(account => account.key);
 
-var publicKeys = [account1key, account2key, account3key];
 var techTokenAddress;
 var bidManagerAddress;
 
@@ -15,19 +12,19 @@ module.exports = function(deployer) {
 
   deployer.then(async () => {
 
-    deployer.deploy(SafeMath, {privateFor: publicKeys});
+    deployer.deploy(SafeMath, {privateFor: PUBLIC_KEYS});
     deployer.link(SafeMath, TechToken);
 
-    await deployer.deploy(TechToken, {privateFor: publicKeys}).then(() => {
+    await deployer.deploy(TechToken, {privateFor: PUBLIC_KEYS}).then(() => {
       console.log("techTokenAddress: ", TechToken.address)
       techTokenAddress = TechToken.address;
     });
 
-    await deployer.deploy(BidManager, {privateFor: publicKeys}).then(() => {
+    await deployer.deploy(BidManager, {privateFor: PUBLIC_KEYS}).then(() => {
       console.log("bidManagerAddress: ", BidManager.address)
       bidManagerAddress = BidManager.address;
     });
 
-    await deployer.deploy(Market, techTokenAddress, bidManagerAddress, {privateFor: publicKeys});
+    await deployer.deploy(Market, techTokenAddress, bidManagerAddress, {privateFor: PUBLIC_KEYS});
   })
 };
