@@ -13,8 +13,8 @@ App = {
   SELLER_KEY: "seller",
   ISPRIVATE_KEY: "isPrivate",
   NULL_ADDRESS: "0x0000000000000000000000000000000000000000",
-  BANK_ADDRESS: "0x9186eb3d20cbd1f5f992a950d808c4495153abd5",
   TXN_GAS: 900000,
+  MARKET_MGR_ADDRESS: null,
 
   web3Provider: null,
   contracts: {},
@@ -29,6 +29,8 @@ App = {
   init: function(accounts) {
     App.accounts = accounts;
     App.account = App.getAccount(window.location.pathname);
+    
+    App.MARKET_MGR_ADDRESS = accounts.find(account => account.name == "Bank").address;
 
     /* Initialize web3 */
     App.web3Provider = new Web3.providers.HttpProvider(App.account.provider);
@@ -323,6 +325,10 @@ App = {
     $(document).on("click", ".btn-sell", App.handleSelling);
     $(document).on("keypress", ".card-input-name", App.handleNickname);
     $(document).on("click", ".btn-edit", App.toggleEdit);
+
+    if (App.account.hash == App.MARKET_MGR_ADDRESS) {
+      $(':button').prop('disabled', true);
+    }
   },
 
   /**
@@ -498,7 +504,7 @@ App = {
    * or all recipients' public key, according to isPrivate
    */
   getTxnPrivateFor: function(privyAccount, isPrivate) {
-      return isPrivate ? [App.getPublicKey(privyAccount), App.getPublicKey(App.BANK_ADDRESS)] : App.inclusivePrivateFor; 
+      return isPrivate ? [App.getPublicKey(privyAccount), App.getPublicKey(App.MARKET_MGR_ADDRESS)] : App.inclusivePrivateFor; 
   },
 
   /**
@@ -512,6 +518,8 @@ App = {
         return App.accounts[1];
       case "/3":
         return App.accounts[2];
+      case "/4":
+        return App.accounts[3];
       default:
         return App.accounts[0];
     }
