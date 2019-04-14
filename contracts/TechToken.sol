@@ -18,7 +18,6 @@ contract TechToken is IERC20 {
 
     string public symbol;
     string public  name;
-    uint8 public decimals;
     uint _totalSupply;
     address owner;
 
@@ -31,8 +30,7 @@ contract TechToken is IERC20 {
     constructor() public {
         symbol = "TCH";
         name = "Tech Token";
-        decimals = 18;
-        _totalSupply = 1000000 * 10**uint(decimals);
+        _totalSupply = 1000000;
         owner = msg.sender;
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
