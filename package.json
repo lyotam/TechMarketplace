@@ -1,13 +1,14 @@
 {
-  "name": "mlh-localhost-quorum",
+  "name": "tech_marketplace",
   "version": "1.0.0",
-  "description": "MLH Localhost: Intro to Ethereum apps Powered by Quorum",
+  "description": "TechMarketplace: A Sample App Utilizing Quorum",
   "main": "truffle.js",
   "scripts": {
     "start": "lite-server",
     "compile": "truffle compile",
     "migrate": "truffle migrate",
     "seed": "truffle exec scripts/seed.js --network development",
+    "populate": "node scripts/populate_QMaccounts.js", 
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",
