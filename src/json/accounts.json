@@ -18,7 +18,7 @@
     "address": "0x0fbdc686b912d7722dc86510934589e0aaf3b55a"
   },
   {
-    "name": "Bank",
+    "name": "Market Manager",
     "provider": "http://localhost:22003",
     "pubKey": "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8=",
     "address": "0x9186eb3d20cbd1f5f992a950d808c4495153abd5"
