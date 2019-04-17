@@ -7,8 +7,10 @@
     "start": "lite-server",
     "compile": "truffle compile",
     "migrate": "truffle migrate",
+    "qm_migrate": "truffle migrate --network qm",
     "seed": "truffle exec scripts/seed.js --network development",
-    "populate": "node scripts/populate_QMaccounts.js", 
+    "qm_seed": "truffle exec scripts/seed.js --network qm",
+    "populate": "sudo node scripts/populate_QMaccounts.js", 
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",

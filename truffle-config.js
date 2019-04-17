@@ -1,5 +1,5 @@
 var LOCAL_HOST = "127.0.0.1";
-var QM_HOST = "192.168.33.11";
+var QM_PORT = 22000;
 
 module.exports = {
   networks: {
@@ -39,36 +39,36 @@ module.exports = {
       gas: 4500000,
     },
     qm: {
-      host: QM_HOST,
-      port: 20400,
+      host: "10.50.0.5",
+      port: QM_PORT,
       network_id: "*", // Match any network id
       gasPrice: 0,
       gas: 4500000,
     },
     qm_nodeone: {
-      host: QM_HOST,
-      port: 20100,
+      host: "10.50.0.2",
+      port: QM_PORT,
       network_id: "*", // Match any network id
       gasPrice: 0,
       gas: 4500000,
     },
     qm_nodetwo: {
-      host: QM_HOST,
-      port: 20200,
+      host: "10.50.0.3",
+      port: QM_PORT,
       network_id: "*", // Match any network id
       gasPrice: 0,
       gas: 4500000,
     },
     qm_nodethree: {
-      host: QM_HOST,
-      port: 20300,
+      host: "10.50.0.4",
+      port: QM_PORT,
       network_id: "*", // Match any network id
       gasPrice: 0,
       gas: 4500000,
     },
     qm_marketmanager: {
-      host: QM_HOST,
-      port: 20400,
+      host: "10.50.0.5",
+      port: QM_PORT,
       network_id: "*", // Match any network id
       gasPrice: 0,
       gas: 4500000,

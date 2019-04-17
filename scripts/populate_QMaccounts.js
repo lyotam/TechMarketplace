@@ -3,7 +3,7 @@ const accounts = require("../src/json/accounts.json");
 
 const NUM_ACCOUNTS = 4;
 const PROJECT_NAME = "TechMarketplaceNetwork";
-const HOST = "http://192.168.33.11";
+const HOST = "http://10.50.0.";
 
 var pubKeys = [];
 var addresses = [];
@@ -16,16 +16,17 @@ for (i = 1; i <= NUM_ACCOUNTS; i++) {
     pubKeys.push(pubkey.toString());
 
     var node4key = JSON.parse(fs.readFileSync(`../../quorum-maker/${PROJECT_NAME}/node${i}/node/qdata/keystore/node${i}key`));
-    console.log(`Node${i} address: `, node4key.address);
-    addresses.push(node4key.address);
+    var address = "0x" + node4key.address;
+    console.log(`Node${i} address: `, address);
+    addresses.push(address);
 }
 
 accounts.forEach((account, index) => {
-    account.provider = `${HOST}:20${index + 1}00`;
+    account.provider = `${HOST + (index + 2)}:22000`;
     account.pubKey = pubKeys[index];
     account.address = addresses[index];
 });
 
-fs.writeFileSync("../src/json/accounts1.json", JSON.stringify(accounts, null, 2));
+fs.writeFileSync("../src/json/accounts.json", JSON.stringify(accounts, null, 2));
 
 console.log("\nQuorum Maker network configurations completed successfully");

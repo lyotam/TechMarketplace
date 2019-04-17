@@ -3,7 +3,7 @@ var SafeMath = artifacts.require("SafeMath");
 var Market = artifacts.require("Market");
 var BidManager = artifacts.require("BidManager");
 
-const PUBLIC_KEYS = require("../src/json/accounts.json").slice(0,3).map(account => account.key);
+const PUBLIC_KEYS = require("../src/json/accounts.json").slice(0,3).map(account => account.pubKey);
 
 var techTokenAddress;
 var bidManagerAddress;

@@ -30,7 +30,7 @@ App = {
     App.accounts = accounts;
     App.account = App.getAccount(window.location.pathname);
     
-    App.MARKET_MGR_ADDRESS = accounts.find(account => account.name == "Bank").address;
+    App.MARKET_MGR_ADDRESS = accounts.find(account => account.name == "Market Manager").address;
 
     /* Initialize web3 */
     App.web3Provider = new Web3.providers.HttpProvider(App.account.provider);
@@ -44,13 +44,13 @@ App = {
       .not([App.account])
       .get()
       .map(function(acc) {
-        return acc.key;
+        return acc.pubKey;
       });
 
     console.log("inclusivePrivateFor: ", App.inclusivePrivateFor);
 
     accounts.forEach(function(account) {
-      App.address2account[account.address] = [account.name, account.key];
+      App.address2account[account.address] = [account.name, account.pubKey];
     });
     App.address2account[App.NULL_ADDRESS] = ["Unknown", ""]; 
 

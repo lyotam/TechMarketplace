@@ -5,7 +5,7 @@ const BidManager = artifacts.require("BidManager");
 const data = require("../src/json/items.json");
 const accounts = require("../src/json/accounts.json");
 
-const PUBLIC_KEYS = accounts.slice(0,3).map(account => account.key);
+const PUBLIC_KEYS = accounts.slice(0,3).map(account => account.pubKey);
 const NUM_ACCOUNTS = 3;
 const TXN_GAS = 900000;
 
