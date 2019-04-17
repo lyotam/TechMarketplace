@@ -135,10 +135,10 @@ App = {
         market.ItemSold().watch(function(error, result) {
           if (!error) {
 
-            console.log("Received Event ItemSold - {itemId: %s, Seller: %s}", Number(result.args.itemId), result.args.seller);
+            console.log("Received Event ItemSold - {itemId: %s}", Number(result.args.itemId));
             App.fetchBalance();
 
-            if (result.args.seller == App.account.hash) {
+            if (App.account.hash == App.MARKET_MGR_ADDRESS) {
               console.log("finalizing Item State");
               
               market.markItemSold(Number(result.args.itemId), {
@@ -172,9 +172,9 @@ App = {
         /* ItemReofferRequest event listener */
         market.ItemReofferRequest().watch(function(error, result) {
           if (!error) {
-            console.log("Received Event ItemReofferRequest - {itemId: %s, Seller: %s, Buyer: %s}", Number(result.args.itemId), result.args.seller, result.args.buyer);
+            console.log("Received Event ItemReofferRequest - {itemId: %s, Buyer: %s}", Number(result.args.itemId), result.args.buyer);
             
-            if (result.args.seller == App.account.hash) {
+            if (App.account.hash == App.MARKET_MGR_ADDRESS) {
               console.log("Reoffering item %s for sale", Number(result.args.itemId));
 
               market.reofferItemForSale(Number(result.args.itemId), result.args.buyer, {
@@ -271,6 +271,7 @@ App = {
     $("#account-image").text(App.account.image);
 
     Object.keys(App.accounts).forEach(function(key, index) {
+    
       var account = App.accounts[key];
       template.find(".dropdown-item").attr("href", "/" + (index + 1));
       template.find(".dropdown-item").text(account.name);
@@ -342,7 +343,7 @@ App = {
     parent.find(".card-input-name").toggle(true);
   },
 
-    /**
+  /**
    * Handles action when user clicks 'Bid'. Calls
    * the creatBid action on the BidManager, after 
    * approving Market the bid amount tokens.
@@ -397,7 +398,7 @@ App = {
       });
   },
 
-    /**
+  /**
    * Handles action when user clicks 'Sell'. Calls
    * the creatBid action on the BidManager, after 
    * approving Market the bid amount tokens.
@@ -407,9 +408,8 @@ App = {
     var button = $(event.target);
     var card = button.closest(".marketplace-item");
     var itemId = card.data("id");
-    var itemSeller = localStorage.getItem(App.SELLER_KEY + itemId);
     var isPrivate = JSON.parse(localStorage.getItem(App.ISPRIVATE_KEY + itemId));
-    var txnPrivateFor = App.getTxnPrivateFor(itemSeller, isPrivate);
+    var txnPrivateFor = App.getTxnPrivateFor(App.NULL_ADDRESS, isPrivate);
 
     console.log("isPrivate (handleSelling): ", isPrivate);
 
@@ -446,8 +446,6 @@ App = {
         console.log(error);
       });
   },
-
-
 
   /**
    * Handles action when user nicknames item. Creates
@@ -504,7 +502,18 @@ App = {
    * or all recipients' public key, according to isPrivate
    */
   getTxnPrivateFor: function(privyAccount, isPrivate) {
-      return isPrivate ? [App.getPublicKey(privyAccount), App.getPublicKey(App.MARKET_MGR_ADDRESS)] : App.inclusivePrivateFor; 
+      var txnPrivateFor;
+
+      if (isPrivate) {
+        txnPrivateFor = [App.getPublicKey(App.MARKET_MGR_ADDRESS)];
+        if (privyAccount != App.NULL_ADDRESS) {
+            txnPrivateFor.push(App.getPublicKey(privyAccount));
+        }
+      }
+      else {
+          txnPrivateFor = App.inclusivePrivateFor;
+      }
+      return txnPrivateFor; 
   },
 
   /**

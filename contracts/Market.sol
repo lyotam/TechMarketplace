@@ -9,6 +9,7 @@ contract Market {
     enum ItemState {Available, Sold}
     IERC20 private cashToken;
     BidManager private bidManager;
+    address owner;
 
     struct Item {
         address seller;
@@ -20,9 +21,9 @@ contract Market {
         ItemState itemState;
     }
 
-    event ItemSold(uint itemId, address seller);
+    event ItemSold(uint itemId);
     event ItemStateSold(uint itemId);
-    event ItemReofferRequest(uint itemId, address seller, address buyer);
+    event ItemReofferRequest(uint itemId, address buyer);
     event ItemOnSale(uint itemId);     
 
     modifier validItemId(uint id) {
@@ -34,6 +35,7 @@ contract Market {
     constructor(address cashTokenAddress, address bidManagerAddress) public {
         cashToken = IERC20(cashTokenAddress);
         bidManager = BidManager(bidManagerAddress);
+        owner = msg.sender;
     }
 
     function getBalance(address account) public view returns (uint) {
@@ -57,18 +59,18 @@ contract Market {
         items[itemId].buyer = buyer;
         items[itemId].itemState = ItemState.Sold;
 
-        emit ItemSold(itemId, items[itemId].seller);
+        emit ItemSold(itemId);
     }
 
     function requestItemReoffer(uint itemId) public {
         require(items[itemId].buyer == msg.sender, "Only item buyer can request to reoffer it for sale");
 
-        emit ItemReofferRequest(itemId, items[itemId].seller, msg.sender);
+        emit ItemReofferRequest(itemId, msg.sender);
     }
 
     function reofferItemForSale(uint itemId, address newOwner) public {
         require(items[itemId].itemState == ItemState.Sold, "Item is not yet sold");
-        require(items[itemId].seller == msg.sender || items[itemId].buyer == msg.sender, "Only item owner can reoffer it for sale");
+        require(owner == msg.sender || items[itemId].buyer == msg.sender, "Only item / market owner can reoffer it for sale");
 
         items[itemId].seller = newOwner;
         items[itemId].buyer = address(0);
@@ -78,7 +80,7 @@ contract Market {
     }
 
     function markItemSold(uint itemId) public {
-        require(items[itemId].seller == msg.sender, "Only seller can mark item as sold");
+        require(owner == msg.sender, "Only Market owner can mark item as sold");
         
         items[itemId].itemState = ItemState.Sold;
 
