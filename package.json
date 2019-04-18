@@ -10,7 +10,7 @@
     "qm_migrate": "truffle migrate --network qm",
     "seed": "truffle exec scripts/seed.js --network development",
     "qm_seed": "truffle exec scripts/seed.js --network qm",
-    "populate": "sudo node scripts/populate_QMaccounts.js", 
+    "populate": "sudo truffle exec scripts/setup_qmAccounts.js --network qm",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",
