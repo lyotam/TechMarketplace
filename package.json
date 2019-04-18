@@ -6,11 +6,11 @@
   "scripts": {
     "start": "lite-server",
     "compile": "truffle compile",
-    "migrate": "truffle migrate",
-    "qm_migrate": "truffle migrate --network qm",
+    "migrate": "truffle migrate --reset",
+    "qm_migrate": "truffle migrate --reset --network qm",
     "seed": "truffle exec scripts/seed.js --network development",
     "qm_seed": "truffle exec scripts/seed.js --network qm",
-    "populate": "sudo truffle exec scripts/setup_qmAccounts.js --network qm",
+    "qm_setup": "sudo truffle exec scripts/setup_qmAccounts.js --network qm",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",

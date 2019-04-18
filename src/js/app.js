@@ -14,6 +14,7 @@ App = {
   ISPRIVATE_KEY: "isPrivate",
   NULL_ADDRESS: "0x0000000000000000000000000000000000000000",
   TXN_GAS: 900000,
+  MARKET_MGR_NAME: "Market Manager",
   MARKET_MGR_ADDRESS: null,
 
   web3Provider: null,
@@ -30,7 +31,7 @@ App = {
     App.accounts = accounts;
     App.account = App.getAccount(window.location.pathname);
     
-    App.MARKET_MGR_ADDRESS = accounts.find(account => account.name == "Market Manager").address;
+    App.MARKET_MGR_ADDRESS = accounts.find(account => account.name == App.MARKET_MGR_NAME).address;
 
     /* Initialize web3 */
     App.web3Provider = new Web3.providers.HttpProvider(App.account.provider);
@@ -39,6 +40,8 @@ App = {
 
     App.account.hash = web3.eth.accounts[0];
 
+    console.log("Account Unlocked: ", web3.personal.unlockAccount(App.account.hash, "", 360000));
+    
     /* Holds an array of all other accounts' public keys */
     App.inclusivePrivateFor = $(App.accounts)
       .not([App.account])
@@ -271,7 +274,6 @@ App = {
     $("#account-image").text(App.account.image);
 
     Object.keys(App.accounts).forEach(function(key, index) {
-    
       var account = App.accounts[key];
       template.find(".dropdown-item").attr("href", "/" + (index + 1));
       template.find(".dropdown-item").text(account.name);
