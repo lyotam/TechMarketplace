@@ -31,11 +31,25 @@ Eventually, approach 4 was selected and implemented.
 
 ## Requirements
 ### Quorum
-This app uses Quorum as the Ethereum protocol in this project. It can be run on top of Quorum's [7nodes example](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) that runs several Quorum nodes in parallel using a virtual machine.
+This app uses Quorum as the Ethereum protocol in this project. This app supports out of the box running on either Quorum-Examples network (7nodes), or a Quorum Maker network.
+
+#### Quorum-Examples network (7nodes)
+The app can run on top of Quorum's [7nodes example](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) that runs several Quorum nodes in parallel using a virtual machine or docker.
 Please follow the steps mentioned in the [7 nodes repo](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes) & the wider [quorum-examples repo](https://github.com/jpmorganchase/quorum-examples) to setup & run the local Quorum network **with these modification**:
 1. Adding to PRIVATE_CONFIG the parameter **--rpccorsdomain "http://localhost:3000"**, in raft-start.sh / instanbul-start.sh / docker-compose.yml, depending on usage.
 2. Reduce the number of nodes to 4 by following steps 1,2 [here](https://github.com/jpmorganchase/quorum-examples/tree/master/examples/7nodes#reducing-the-number-of-nodes).
 
+#### Quorum Maker network 
+The app can run on top of a [Quorum Maker](https://github.com/synechron-finlabs/quorum-maker) dockerized network, and requires 
+docker & docker-compose installed. For more info refer to [quorum-maker wiki](https://github.com/synechron-finlabs/quorum-maker/wiki).
+To quickly setup and run the network:
+```sh
+$ git clone https://github.com/synechron-finlabs/quorum-maker
+$ cd quorum-maker
+$ ./setup.sh dev -p TechMarketplaceNetwork -n 4
+$ cd TechMarketplaceNetwork
+$ docker-compose up
+```
 
 ### App
 * Install [NodeJS](https://nodejs.org) - Event-driven Javascript runtime environment
@@ -44,6 +58,8 @@ Please follow the steps mentioned in the [7 nodes repo](https://github.com/jpmor
 
 
 ## Installation
+If running on top of a Quorum Maker network, make sure to clone the repo to the same directory where quorum-maker is located.
+
 
 ```sh
 $ git clone https://github.com/lyotam/TechMarketplace.git
@@ -51,21 +67,33 @@ $ cd TechMarketplace
 $ npm install
 ```
 
-## Running
+## Running the App
 
-To get your TechMarketplace application up and running locally, you will need to run the Quorum network, compile your contracts, migrate those contracts to the network, populate those contracts with data, then run your application:
+To get your TechMarketplace application up and running locally, you will need to first setup & run the Quorum network, as mentioned before and only then compile your contracts, migrate those contracts to the network, populate those contracts with data, and run your application as follows:
 
-### Quorum network
-To setup & run a Quorum network, follow the steps [here](https://github.com/jpmorganchase/quorum-examples#getting-started).
 
-### TechMarketplace
+Running with Quorum-Examples network (7nodes):
 
 ```sh
-$ truffle compile
-$ truffle migrate --reset
+$ npm run compile
+$ npm run migrate
 $ npm run seed
 $ npm start
 ```
+
+Running with Quorum Maker network:
+
+```sh
+$ npm run qm_setup
+$ npm run compile
+$ npm run qm_migrate
+$ npm run qm_seed
+$ npm start
+```
+
+
+***To note: For best view of the app's flow of execution, it is recommended to have all 4 accounts' tabs open on your browser**
+
 
 
 ## Additional Resources
