@@ -12,7 +12,7 @@ interface IERC20 {
     function allowance(address tokenOwner, address spender) external view returns (uint remaining);
     function transfer(address to, uint tokens) external returns (bool success);
     function approve(address spender, uint tokens) external returns (bool success);
-    function transferFrom(address from, address to, uint tokens) external returns (bool success);    
+    function transferFrom(address from, address to, uint tokens) external returns (bool success);
     // function approveAndCall(address spender, uint tokens, uint data) external returns (bool success);
 
     event Transfer(address indexed from, address indexed to, uint tokens);

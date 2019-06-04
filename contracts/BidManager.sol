@@ -41,7 +41,7 @@ contract BidManager {
 
         bids[bidId] = Bid(itemId, bidPrice, msg.sender);
         bidIdsForItem[itemId].push(bidId);
-        
+
         emit BidCreated(bidId, itemId, msg.sender, Market(market).getItemSeller(itemId));
         return bidId;
     }

@@ -24,7 +24,7 @@ contract Market {
     event ItemSold(uint itemId);
     event ItemStateSold(uint itemId);
     event ItemReofferRequest(uint itemId, address buyer);
-    event ItemOnSale(uint itemId);     
+    event ItemOnSale(uint itemId);
 
     modifier validItemId(uint id) {
         require(id >= 0 && id <= items.length, "Invalid item id");
@@ -81,7 +81,7 @@ contract Market {
 
     function markItemSold(uint itemId) public {
         require(owner == msg.sender, "Only Market owner can mark item as sold");
-        
+
         items[itemId].itemState = ItemState.Sold;
 
         emit ItemStateSold(itemId);
@@ -112,9 +112,8 @@ contract Market {
 
     function setItemPrice(uint itemId, uint256 price) public {
         require(items[itemId].seller == msg.sender, "Only seller can set item price");
-    
+
         items[itemId].price = price;
     }
-            
 
 }
