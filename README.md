@@ -84,7 +84,7 @@ $ npm start
 Running with Quorum Maker network:
 
 ```sh
-$ npm run qm_setup
+$ sudo npm run qm_setup
 $ npm run compile
 $ npm run qm_migrate
 $ npm run qm_seed
