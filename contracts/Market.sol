@@ -48,6 +48,7 @@ contract Market {
     }
 
     function executeSale(uint itemId, bytes32 bidId) public {
+        require(items[itemId].seller == msg.sender, "Only item seller can execute sale");
         require(items[itemId].itemState == ItemState.Available, "Item is not for sale");
 
         (uint bidPrice, address buyer) = bidManager.acceptBid(bidId, itemId);
