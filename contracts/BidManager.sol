@@ -15,7 +15,7 @@ contract BidManager {
         address buyer;
     }
 
-    event BidCreated(bytes32 bidId, uint256 itemId, address buyer, address seller);
+    event BidCreated(bytes32 bidId, uint256 itemId, uint bidPrice, address seller);
     event BidAccepted(bytes32 bidId);
 
     modifier onlyOwner() {
@@ -42,7 +42,7 @@ contract BidManager {
         bids[bidId] = Bid(itemId, bidPrice, msg.sender);
         bidIdsForItem[itemId].push(bidId);
 
-        emit BidCreated(bidId, itemId, msg.sender, Market(market).getItemSeller(itemId));
+        emit BidCreated(bidId, itemId, bidPrice, Market(market).getItemSeller(itemId));
         return bidId;
     }
 

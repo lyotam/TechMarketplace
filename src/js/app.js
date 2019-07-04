@@ -92,7 +92,7 @@ App = {
         /* BidCreated event listener */
         bidManager.BidCreated().watch(function(error, result) {
           if (!error) {
-            console.log("Received Event BidCreated - {bidId: %s, itemId: %s, buyer: %s, seller: %s}", result.args.bidId, Number(result.args.itemId), result.args.buyer, result.args.seller);
+            console.log("Received Event BidCreated - {bidId: %s, itemId: %s, bidPrice: %s, seller: %s}", result.args.bidId, Number(result.args.itemId), Number(result.args.bidPrice), result.args.seller);
 
             if (result.args.seller == App.account.hash) {
               console.log("Seller received bid and executing the deal");
