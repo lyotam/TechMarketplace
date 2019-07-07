@@ -42,7 +42,7 @@ contract Market {
         return cashToken.balanceOf(account);
     }
 
-    function createItem(address _seller, string _name, string _image, uint256 _price) public {
+    function createItem(address _seller, string memory _name, string memory _image, uint256 _price) public {
         Item memory _item = Item(_seller, _name, _image, _price, "", address(0), ItemState.Available);
         items.push(_item);
     }
@@ -88,7 +88,7 @@ contract Market {
         emit ItemStateSold(itemId);
     }
 
-    function setNickname(uint itemId, string newNickname) public validItemId(itemId) returns (uint) {
+    function setNickname(uint itemId, string memory newNickname) public validItemId(itemId) returns (uint) {
         items[itemId].nickname = newNickname;
 
         return itemId;
@@ -98,7 +98,7 @@ contract Market {
         return items.length;
     }
 
-    function getItem(uint itemId) public view returns (uint, address, string, string, uint256, string, address, uint) {
+    function getItem(uint itemId) public view returns (uint, address, string memory, string memory, uint256, string memory, address, uint) {
         Item memory item = items[itemId];
         return (itemId, item.seller, item.name, item.image, item.price, item.nickname, item.buyer, uint(item.itemState));
     }
