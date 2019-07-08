@@ -64,20 +64,19 @@ contract Market {
     }
 
     function requestItemReoffer(uint itemId) public {
-        require(items[itemId].buyer == msg.sender, "Only item buyer can request to reoffer it for sale");
+        // Add the implementation here
 
-        emit ItemReofferRequest(itemId, msg.sender);
+        
     }
 
     function reofferItemForSale(uint itemId, address newOwner) public {
-        require(items[itemId].itemState == ItemState.Sold, "Item is not yet sold");
-        require(owner == msg.sender || items[itemId].buyer == msg.sender, "Only item / market owner can reoffer it for sale");
+       // Add the implementation here
 
-        items[itemId].seller = newOwner;
-        items[itemId].buyer = address(0);
-        items[itemId].itemState = ItemState.Available;
 
-        emit ItemOnSale(itemId);
+
+
+
+
     }
 
     function markItemSold(uint itemId) public {

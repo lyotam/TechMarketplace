@@ -421,20 +421,20 @@ App = {
     await App.contracts.Market.deployed()
       .then(function(market) {
         if (isPrivate) {
-          console.log("requestItemReoffer as txn was private");
-          return market.requestItemReoffer(itemId, {
-            from: App.account.hash,
-            privateFor: txnPrivateFor,
-            gas: App.TXN_GAS
-          })
+
+          // Add the implementation here
+
+
+
+
         }
         else {
-          console.log("reofferItemForSale as txn was public");
-          return market.reofferItemForSale(itemId, App.account.hash, {
-            from: App.account.hash,
-            privateFor: txnPrivateFor,
-            gas: App.TXN_GAS
-          })
+          
+          // Add the implementation here
+
+
+
+
         }
       })
       .then((res) => {
