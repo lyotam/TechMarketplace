@@ -47,7 +47,7 @@ contract Market {
         items.push(_item);
     }
 
-    function executeSale(uint itemId, bytes32 bidId) public {
+    function executeSale(uint itemId, bytes32 bidId) public validItemId(itemId) {
         require(items[itemId].seller == msg.sender, "Only item seller can execute sale");
         require(items[itemId].itemState == ItemState.Available, "Item is not for sale");
 
@@ -63,13 +63,13 @@ contract Market {
         emit ItemSold(itemId);
     }
 
-    function requestItemReoffer(uint itemId) public {
+    function requestItemReoffer(uint itemId) public validItemId(itemId) {
         require(items[itemId].buyer == msg.sender, "Only item buyer can request to reoffer it for sale");
 
         emit ItemReofferRequest(itemId, msg.sender);
     }
 
-    function reofferItemForSale(uint itemId, address newOwner) public {
+    function reofferItemForSale(uint itemId, address newOwner) public validItemId(itemId) {
         require(items[itemId].itemState == ItemState.Sold, "Item is not yet sold");
         require(owner == msg.sender || items[itemId].buyer == msg.sender, "Only item / market owner can reoffer it for sale");
 
@@ -80,7 +80,7 @@ contract Market {
         emit ItemOnSale(itemId);
     }
 
-    function markItemSold(uint itemId) public {
+    function markItemSold(uint itemId) public validItemId(itemId) {
         require(owner == msg.sender, "Only Market owner can mark item as sold");
 
         items[itemId].itemState = ItemState.Sold;
@@ -98,20 +98,21 @@ contract Market {
         return items.length;
     }
 
-    function getItem(uint itemId) public view returns (uint, address, string memory, string memory, uint256, string memory, address, uint) {
+    function getItem(uint itemId) public view validItemId(itemId)
+        returns (uint, address, string memory, string memory, uint256, string memory, address, uint) {
         Item memory item = items[itemId];
         return (itemId, item.seller, item.name, item.image, item.price, item.nickname, item.buyer, uint(item.itemState));
     }
 
-    function getItemSeller(uint itemId) public view returns (address) {
+    function getItemSeller(uint itemId) public view validItemId(itemId) returns (address) {
         return items[itemId].seller;
     }
 
-    function getItemPrice(uint itemId) public view returns (uint) {
+    function getItemPrice(uint itemId) public view validItemId(itemId) returns (uint) {
         return items[itemId].price;
     }
 
-    function setItemPrice(uint itemId, uint256 price) public {
+    function setItemPrice(uint itemId, uint256 price) public validItemId(itemId) {
         require(items[itemId].seller == msg.sender, "Only seller can set item price");
 
         items[itemId].price = price;
