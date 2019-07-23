@@ -73,5 +73,12 @@ module.exports = {
       gasPrice: 0,
       gas: 4500000,
     },
+    qm_mac: {
+      host: LOCAL_HOST,
+      port: 20400,
+      network_id: "*", // Match any network id
+      gasPrice: 0,
+      gas: 4500000,
+    },
   },
 };

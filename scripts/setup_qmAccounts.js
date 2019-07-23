@@ -2,10 +2,11 @@ const fs = require('fs');
 const accounts = require("../src/json/accounts.json");
 
 const NUM_ACCOUNTS = 4;
-const PROJECT_NAME = "TechMarketplaceNetwork";
-const HOST = "http://10.50.0.";
+const PROJECT_NAME = "QuorumNetwork";
+const QM_HOST = "http://10.50.0.";
+const LOCAL_HOST = "http://127.0.0.1";
 
-const extractAccountDetails = async function() {
+const extractAccountDetails = async function(op_system) {
   var pubKeys = [];
   var addresses = [];
 
@@ -23,7 +24,15 @@ const extractAccountDetails = async function() {
   }
 
   accounts.forEach((account, index) => {
-    account.provider = `${HOST + (index + 2)}:22000`;
+
+    switch(op_system) {
+      case "mac":
+        account.provider = `${LOCAL_HOST}:${(index * 100) + 20100}`;
+        break;
+      default:
+        account.provider = `${QM_HOST + (index + 2)}:22000`;
+    }
+
     account.pubKey = pubKeys[index];
     account.address = addresses[index];
   });
@@ -38,7 +47,7 @@ module.exports = async function() {
 
   try {
 
-    await extractAccountDetails();
+    await extractAccountDetails(process.argv[4]);
 
     await web3.personal.unlockAccount(web3.eth.accounts[0], "", 360000);
     
