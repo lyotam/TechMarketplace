@@ -6,7 +6,7 @@ const PROJECT_NAME = "QuorumNetwork";
 const QM_HOST = "http://10.50.0.";
 const LOCAL_HOST = "http://127.0.0.1";
 
-const extractAccountDetails = async function(op_system) {
+const extractAccountDetails = async function (op_system) {
   var pubKeys = [];
   var addresses = [];
 
@@ -25,7 +25,7 @@ const extractAccountDetails = async function(op_system) {
 
   accounts.forEach((account, index) => {
 
-    switch(op_system) {
+    switch (op_system) {
       case "mac":
         account.provider = `${LOCAL_HOST}:${(index * 100) + 20100}`;
         break;
@@ -43,16 +43,16 @@ const extractAccountDetails = async function(op_system) {
 };
 
 
-module.exports = async function() {
+module.exports = async function () {
 
   try {
 
     await extractAccountDetails(process.argv[4]);
 
     await web3.personal.unlockAccount(web3.eth.accounts[0], "", 360000);
-    
+
     console.log(`\nAccount ${web3.eth.accounts[0]} Unlocked`);
-    
+
   } catch (error) {
     console.log(error);
   }
