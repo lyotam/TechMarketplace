@@ -8,9 +8,12 @@
     "compile": "truffle compile",
     "migrate": "truffle migrate --reset",
     "qm_migrate": "truffle migrate --reset --network qm",
+    "qm_migrate_mac": "truffle migrate --reset --network qm_mac",
     "seed": "truffle exec scripts/seed.js --network development",
     "qm_seed": "truffle exec scripts/seed.js --network qm",
+    "qm_seed_mac": "truffle exec scripts/seed.js --network qm_mac",
     "qm_setup": "truffle exec scripts/setup_qmAccounts.js --network qm",
+    "qm_setup_mac": "truffle exec scripts/setup_qmAccounts.js mac --network qm_mac",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",
@@ -20,7 +23,7 @@
     "growl": "^1.10.5",
     "lite-server": "^2.5.3",
     "localtunnel": "^1.9.2",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.15",
     "truffle": "^4.1.5"
   }
 }
