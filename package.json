@@ -23,7 +23,7 @@
     "growl": "^1.10.5",
     "lite-server": "^2.5.3",
     "localtunnel": "^1.9.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "truffle": "^4.1.5"
   }
 }
