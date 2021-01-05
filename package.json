@@ -18,7 +18,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "diff": "^3.5.0",
     "growl": "^1.10.5",
     "lite-server": "^2.5.3",
